@@ -1,0 +1,42 @@
+{
+    "orchestrator": {
+    "AddTask": {
+		"url": "addTask",
+		"method": "POST"
+	},
+	"GetTasksStatus": {
+		"url": "getTasksStatus",
+		"method": "GET"
+	},
+	"GetResult": {
+		"url": "getResult/<number>",
+		"method": "GET"
+	},
+	"GetOperationsTimeouts": {
+		"url": "getOperationsTimeouts",
+		"method": "GET"
+	},
+	"GetTask": {
+		"url": "getTask",
+		"method": "GET"
+	},
+	"SetResult": {
+		"url": "setResult",
+		"method": "POST"
+	},
+	"Register": {
+		"url": "register",
+		"method": "POST"
+	}
+},
+    "agent": {
+        "GetTaskStatus": {
+			"url": "getTaskStatus/<number>",
+			"method": "GET"
+		},
+	    "IsWorking": {
+			"url": "isWorking",
+			"method": "GET"
+		}
+    }
+}
