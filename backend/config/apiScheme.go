@@ -18,13 +18,13 @@ type OrchestratorScheme struct {
 }
 
 type Endpoint struct {
-	Url    string `json:"url"`
-	Method string `json:"method"`
+	Url        string   `json:"url"`
+	Method     string   `json:"method"`
+	RestParams []string `json:"restParams"`
 }
 
 type AgentScheme struct {
 	GetTaskStatus Endpoint
-	IsWorking     Endpoint
 }
 
 type ApiScheme struct {

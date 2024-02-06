@@ -9,8 +9,9 @@
 		"method": "GET"
 	},
 	"GetResult": {
-		"url": "getResult/<number>",
-		"method": "GET"
+		"url": "getResult",
+		"method": "GET",
+		"restParams": ["id"]
 	},
 	"GetOperationsTimeouts": {
 		"url": "getOperationsTimeouts",
@@ -31,12 +32,9 @@
 },
     "agent": {
         "GetTaskStatus": {
-			"url": "getTaskStatus/<number>",
-			"method": "GET"
-		},
-	    "IsWorking": {
-			"url": "isWorking",
-			"method": "GET"
+			"url": "getTaskStatus",
+			"method": "GET",
+			"restParams": ["id"]
 		}
     }
 }

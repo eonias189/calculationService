@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/eonias189/calculationService/backend/config"
-	"github.com/eonias189/calculationService/backend/interfaces"
+	types "github.com/eonias189/calculationService/backend/interfaces"
 )
 
 type AgentApi struct {
@@ -17,14 +17,17 @@ func NewAgentApi(scheme config.AgentScheme, url string) *AgentApi {
 	return &AgentApi{url: url, scheme: scheme, cli: &http.Client{}}
 }
 
-func (api *AgentApi) GetTaskStatus(id string) (interfaces.TaskStatus, error) {
-	params := RequestParams[None]{Endpoint: api.scheme.GetTaskStatus, Body: None{}}
-	resp, err := DoRequest[None, interfaces.TaskStatus](api.cli, api.url, params, id)
-	return resp, err
-}
-
-func (api *AgentApi) IsWorking() bool {
-	params := RequestParams[None]{Endpoint: api.scheme.IsWorking, Body: None{}}
-	DoRequest[None, None](api.cli, api.url, params)
-	return true
+func (api *AgentApi) GetTaskStatus(id string) (types.TaskStatus, error) {
+	resp := &types.GetTaskStatusResponse{}
+	params := types.GetTaskStatusApi{
+		RestParams: types.GetTaskStatusRestParams{
+			ID: id,
+		},
+		Response: resp,
+	}
+	err := DoRequest(api.cli, api.url, api.scheme.GetTaskStatus, params)
+	if err != nil {
+		return types.TaskStatus{}, err
+	}
+	return resp.TaskStatus, resp.GetError()
 }

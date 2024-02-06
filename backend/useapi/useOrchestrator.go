@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/eonias189/calculationService/backend/config"
-	"github.com/eonias189/calculationService/backend/interfaces"
+	types "github.com/eonias189/calculationService/backend/interfaces"
 )
 
 type OrchestratorApi struct {
@@ -17,62 +17,98 @@ func NewOrchestratorApi(scheme config.OrchestratorScheme, url string) *Orchestra
 	return &OrchestratorApi{scheme: scheme, cli: &http.Client{}, url: url}
 }
 
-func (api *OrchestratorApi) AddTask(task interfaces.Task) error {
-	params := RequestParams[interfaces.Task]{Endpoint: api.scheme.AddTask, Body: task}
-	_, err := DoRequest[interfaces.Task, None](api.cli, api.url, params)
-	return err
-}
-
-func (api *OrchestratorApi) GetTasksStatus() ([]interfaces.TaskStatus, error) {
-	params := RequestParams[None]{Endpoint: api.scheme.GetTasksStatus, Body: None{}}
-	resp, err := DoRequest[None, []interfaces.TaskStatus](api.cli, api.url, params)
-	if err != nil {
-		return []interfaces.TaskStatus{}, err
+func (api *OrchestratorApi) AddTask(task types.Task) error {
+	resp := &types.ErrorResponse{}
+	params := types.AddTaskApi{
+		Body: types.AddTaskBody{
+			Task: task,
+		},
+		Response: resp,
 	}
-	return resp, nil
+	err := DoRequest(api.cli, api.url, api.scheme.AddTask, params)
+	if err != nil {
+		return err
+	}
+	return resp.GetError()
 }
-
-type GetResultResponse struct {
-	Number int `json:"number"`
-}
-
 func (api *OrchestratorApi) GetResult(id string) (int, error) {
-	params := RequestParams[None]{Endpoint: api.scheme.GetResult, Body: None{}}
-	resp, err := DoRequest[None, GetResultResponse](api.cli, api.url, params, id)
+	resp := &types.GetResultResponse{}
+	params := types.GetResultApi{
+		RestParams: types.GetResultRestParams{
+			ID: id,
+		},
+		Response: resp,
+	}
+	err := DoRequest(api.cli, api.url, api.scheme.GetResult, params)
 	if err != nil {
 		return 0, err
 	}
-	return resp.Number, nil
+	return resp.Number, resp.GetError()
 }
 
-func (api *OrchestratorApi) GetOperationsTimeouts() (interfaces.OperationsTimeouts, error) {
-	params := RequestParams[None]{Endpoint: api.scheme.GetOperationsTimeouts, Body: None{}}
-	resp, err := DoRequest[None, interfaces.OperationsTimeouts](api.cli, api.url, params)
-	return resp, err
+func (api *OrchestratorApi) GetTasksStatus() ([]types.TaskStatus, error) {
+	resp := &types.GetTasksStatusResponse{}
+	params := types.GetTasksStatusApi{
+		Response: resp,
+	}
+	err := DoRequest(api.cli, api.url, api.scheme.GetTasksStatus, params)
+	if err != nil {
+		return []types.TaskStatus{}, err
+	}
+	return resp.TasksStatus, resp.GetError()
 }
 
-func (api *OrchestratorApi) GetTask() (interfaces.Task, error) {
-	params := RequestParams[None]{Endpoint: api.scheme.GetTask, Body: None{}}
-	resp, err := DoRequest[None, interfaces.Task](api.cli, api.url, params)
-	return resp, err
+func (api *OrchestratorApi) GetOperationsTimeouts() (types.OperationsTimeouts, error) {
+	resp := &types.GetOperationsTimeoutsResponse{}
+	params := types.GetOperationsTimeoutsApi{
+		Response: resp,
+	}
+	err := DoRequest(api.cli, api.url, api.scheme.GetOperationsTimeouts, params)
+	if err != nil {
+		return types.OperationsTimeouts{}, err
+	}
+	return resp.OperationsTimeouts, resp.GetError()
 }
 
-type SetResultBody struct {
-	ID     string `json:"id"`
-	Number int    `json:"number"`
+func (api *OrchestratorApi) GetTask() (types.Task, error) {
+	resp := &types.GetTaskResponse{}
+	params := types.GetTaskApi{
+		Response: resp,
+	}
+	err := DoRequest(api.cli, api.url, api.scheme.GetTask, params)
+	if err != nil {
+		return types.Task{}, err
+	}
+	return resp.Task, resp.GetError()
 }
 
 func (api *OrchestratorApi) SetResult(id string, number int) error {
-	params := RequestParams[SetResultBody]{Endpoint: api.scheme.SetResult, Body: SetResultBody{ID: id, Number: number}}
-	_, err := DoRequest[SetResultBody, None](api.cli, api.url, params)
-	return err
+	resp := &types.ErrorResponse{}
+	params := types.SetResultApi{
+		Body: types.SetResultBody{
+			ID:     id,
+			Number: number,
+		},
+		Response: resp,
+	}
+	err := DoRequest(api.cli, api.url, api.scheme.SetResult, params)
+	if err != nil {
+		return err
+	}
+	return resp.GetError()
 }
 
-type RegisterBody struct {
-	Url string `json:"url"`
-}
-
-func (api *OrchestratorApi) Register(url string) {
-	params := RequestParams[RegisterBody]{Endpoint: api.scheme.Register, Body: RegisterBody{Url: url}}
-	DoRequest[RegisterBody, None](api.cli, api.url, params)
+func (api *OrchestratorApi) Register(url string) error {
+	resp := &types.ErrorResponse{}
+	params := types.RegisterApi{
+		Body: types.RegisterBody{
+			Url: url,
+		},
+		Response: resp,
+	}
+	err := DoRequest(api.cli, api.url, api.scheme.Register, params)
+	if err != nil {
+		return err
+	}
+	return resp.GetError()
 }
