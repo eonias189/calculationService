@@ -17,6 +17,10 @@
 		"url": "getOperationsTimeouts",
 		"method": "GET"
 	},
+	"SetOperationsTimeouts": {
+		"url": "setOperationsTimeouts",
+		"method": "POST"
+	},
 	"GetTask": {
 		"url": "getTask",
 		"method": "GET"

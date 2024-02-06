@@ -1,6 +1,8 @@
 package interfaces
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type None struct{}
 
@@ -15,21 +17,12 @@ func (er *ErrorResponse) GetError() error {
 	return fmt.Errorf(er.Error)
 }
 
-type ApiMethod[Body any, RestParams any, Response any] struct {
+type ApiMethod[Body any, RP any, Response any] struct {
 	Body       Body
-	RestParams RestParams
+	RestParams RP
 	Response   *Response
 }
 
-func NewApiMethod[Body any, RestParams any, Response any](body Body, restParams RestParams, response *Response) ApiMethod[Body, RestParams, Response] {
-	return ApiMethod[Body, RestParams, Response]{Body: body, RestParams: restParams, Response: response}
-}
-
-func f[B any, RP any, R any](m ApiMethod[B, RP, R]) ApiMethod[B, RP, R] {
-	return ApiMethod[B, RP, R]{
-		Body:       m.Body,
-		RestParams: m.RestParams,
-		Response:   m.Response,
-	}
-
+func NewApiMethod[Body any, RP any, Response any](body Body, restParams RP, response *Response) ApiMethod[Body, RP, Response] {
+	return ApiMethod[Body, RP, Response]{Body: body, RestParams: restParams, Response: response}
 }

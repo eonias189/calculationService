@@ -9,6 +9,7 @@ type IOrchestrator interface {
 	GetTask() (Task, error)
 	SetResult(string, int) error
 	Register(string) error
+	Run(string)
 }
 
 type AddTaskApi ApiMethod[AddTaskBody, None, ErrorResponse]

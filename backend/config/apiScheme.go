@@ -12,6 +12,7 @@ type OrchestratorScheme struct {
 	GetTasksStatus        Endpoint
 	GetResult             Endpoint
 	GetOperationsTimeouts Endpoint
+	SetOperationsTimeouts Endpoint
 	GetTask               Endpoint
 	SetResult             Endpoint
 	Register              Endpoint

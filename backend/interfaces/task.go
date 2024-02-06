@@ -7,6 +7,7 @@ type Task struct {
 }
 
 type TaskStatus struct {
-	Done bool `json:"done"`
-	Err  bool `json:"err"`
+	ID   string `json:"id"`
+	Done bool   `json:"done"`
+	Err  bool   `json:"err"`
 }

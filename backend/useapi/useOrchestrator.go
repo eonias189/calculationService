@@ -70,6 +70,21 @@ func (api *OrchestratorApi) GetOperationsTimeouts() (types.OperationsTimeouts, e
 	return resp.OperationsTimeouts, resp.GetError()
 }
 
+func (api *OrchestratorApi) SetOperationsTimeouts(timeouts types.OperationsTimeouts) error {
+	resp := &types.ErrorResponse{}
+	params := types.SetOperationsTimeoutsApi{
+		Body: types.SetOperationsTimeoutsBody{
+			OperationsTimeouts: timeouts,
+		},
+		Response: resp,
+	}
+	err := DoRequest(api.cli, api.url, api.scheme.SetOperationsTimeouts, params)
+	if err != nil {
+		return err
+	}
+	return resp.GetError()
+}
+
 func (api *OrchestratorApi) GetTask() (types.Task, error) {
 	resp := &types.GetTaskResponse{}
 	params := types.GetTaskApi{
