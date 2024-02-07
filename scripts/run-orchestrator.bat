@@ -1,0 +1,1 @@
+go run ./orchestrator/cmd/main.go

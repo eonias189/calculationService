@@ -1,0 +1,43 @@
+{
+    "orchestrator": {
+    "addTask": {
+		"url": "addTask",
+		"method": "POST"
+	},
+	"getTasksStatus": {
+		"url": "getTasksStatus",
+		"method": "GET"
+	},
+	"getResult": {
+		"url": "getResult",
+		"method": "GET",
+		"restParams": ["id"]
+	},
+	"getTaskStatus": {
+		"url": "getOperationsTimeouts",
+		"method": "GET"
+	},
+	"setOperationsTimeouts": {
+		"url": "setOperationsTimeouts",
+		"method": "POST"
+	},
+	"getTask": {
+		"url": "getTask",
+		"method": "GET"
+	},
+	"setResult": {
+		"url": "setResult",
+		"method": "POST"
+	},
+	"register": {
+		"url": "register",
+		"method": "POST"
+	}
+},
+    "agent": {
+        "ping": {
+			"url": "ping",
+			"method": "GET"
+		}
+    }
+}
