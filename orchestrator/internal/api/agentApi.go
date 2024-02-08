@@ -14,15 +14,12 @@ type AgentApi struct {
 	Url    string
 }
 
-func (a *AgentApi) Ping() (bool, error) {
-	resp := &c.PingResponse{}
+func (a *AgentApi) GetStatus() (c.GetAgentStatusResponse, error) {
+	resp := &c.GetAgentStatusResponse{}
 	body, respParams := utils.None{}, utils.None{}
 	params := utils.NewRequestParams(body, respParams, resp)
-	err := utils.DoRequest(a.cli, a.Url, a.scheme.Ping, params)
-	if err != nil {
-		return false, err
-	}
-	return resp.Ok, resp.GetError()
+	err := utils.DoRequest(a.cli, a.Url, a.scheme.GetAgentStatus, params)
+	return *resp, err
 }
 
 func NewAgentApi(url string, sheme config.AgentScheme) *AgentApi {

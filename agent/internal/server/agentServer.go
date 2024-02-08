@@ -14,18 +14,14 @@ type Server struct {
 	Url      string
 	scheme   config.AgentScheme
 	agent    *agent.Agent
-	handlers map[string]http.HandlerFunc
+	handlers map[string]http.Handler
 }
 
-func (s *Server) handlePing(w http.ResponseWriter, r *http.Request) {
-	resp := c.PingResponse{}
+func (s *Server) handleGetAgentStatus(w http.ResponseWriter, r *http.Request) {
+	resp := c.GetAgentStatusResponse{}
 	defer utils.SendResponse(&resp, w)
 
-	ok, err := s.agent.Ping()
-	if err != nil {
-		resp.Error = err.Error()
-	}
-	resp.Ok = ok
+	resp.Status, resp.Error = s.agent.GetAgentStatus()
 }
 
 func (s *Server) Handle(endpoint config.Endpoint, handler http.HandlerFunc) {
@@ -35,17 +31,17 @@ func (s *Server) Handle(endpoint config.Endpoint, handler http.HandlerFunc) {
 	} else {
 		pattern = "/" + endpoint.Url
 	}
-	s.handlers[pattern] = handler
+	s.handlers[pattern] = utils.CheckMethodMiddleware(handler, endpoint.Method)
 }
 
 func (s *Server) Run() {
 	mux := http.NewServeMux()
 
-	s.Handle(s.scheme.Ping, s.handlePing)
+	s.Handle(s.scheme.GetAgentStatus, s.handleGetAgentStatus)
 
 	for pattern, handler := range s.handlers {
 		fmt.Printf("handling %v\n", pattern)
-		mux.HandleFunc(pattern, handler)
+		mux.Handle(pattern, handler)
 	}
 
 	s.agent.Run(s.Url)
@@ -53,5 +49,5 @@ func (s *Server) Run() {
 }
 
 func New(agent *agent.Agent, url string, scheme config.AgentScheme) *Server {
-	return &Server{agent: agent, scheme: scheme, Url: url, handlers: make(map[string]http.HandlerFunc)}
+	return &Server{agent: agent, scheme: scheme, Url: url, handlers: make(map[string]http.Handler)}
 }

@@ -14,7 +14,7 @@ type Server struct {
 	Url          string
 	scheme       config.OrchestratorScheme
 	orchestrator *orchestrator.Orchestrator
-	handlers     map[string]http.HandlerFunc
+	handlers     map[string]http.Handler
 }
 
 func (s *Server) handleAddTask(w http.ResponseWriter, r *http.Request) {
@@ -23,31 +23,71 @@ func (s *Server) handleAddTask(w http.ResponseWriter, r *http.Request) {
 
 	body, err := utils.GetBody[c.AddTaskBody](r)
 	if err != nil {
-		resp.Error = err.Error()
+		resp.Error = err
 		return
 	}
 
 	err = s.orchestrator.AddTask(body.Task)
-	if err != nil {
-		resp.Error = err.Error()
-	}
+	resp.Error = err
 }
 
-func (s *Server) handleGetResult(w http.ResponseWriter, r *http.Request) {
-	resp := c.GetResultResponse{}
+func (s *Server) handleGetTask(w http.ResponseWriter, r *http.Request) {
+	resp := c.GetTaskResponse{}
 	defer utils.SendResponse(&resp, w)
 
-	params, err := utils.ParseRestParams[c.GetResultRestParams](r, s.scheme.GetResult)
+	resp.Task, resp.Error = s.orchestrator.GetTask()
+}
+
+func (s *Server) handleGetTasksData(w http.ResponseWriter, r *http.Request) {
+	resp := c.GetTasksDataResponse{}
+	defer utils.SendResponse(&resp, w)
+
+	resp.TasksData, resp.Error = s.orchestrator.GetTasksData()
+}
+func (s *Server) handleGetAgentsData(w http.ResponseWriter, r *http.Request) {
+	resp := c.GetAgentsDataResponse{}
+	defer utils.SendResponse(&resp, w)
+
+	resp.Data, resp.Error = s.orchestrator.GetAgentsData()
+}
+func (s *Server) handleGetOperationsTimeouts(w http.ResponseWriter, r *http.Request) {
+	resp := c.GetOperationsTimeoutsResponse{}
+	defer utils.SendResponse(&resp, w)
+
+	resp.OperationsTimeouts, resp.Error = s.orchestrator.GetOperationsTimeouts()
+}
+func (s *Server) handleSetOperationsTimeouts(w http.ResponseWriter, r *http.Request) {
+	resp := c.ErrorResponse{}
+	defer utils.SendResponse(&resp, w)
+
+	body, err := utils.GetBody[c.SetOperationsTimeoutsBody](r)
 	if err != nil {
-		resp.Error = err.Error()
+		resp.Error = err
 		return
 	}
-	res, err := s.orchestrator.GetResult(params.ID)
-	if err != nil {
-		resp.Error = err.Error()
-	}
-	resp.Number = res
+	resp.Error = s.orchestrator.SetOperationsTimeouts(body.OperationsTimeouts)
+}
+func (s *Server) handleSetResult(w http.ResponseWriter, r *http.Request) {
+	resp := c.ErrorResponse{}
+	defer utils.SendResponse(&resp, w)
 
+	body, err := utils.GetBody[c.SetResultBody](r)
+	if err != nil {
+		resp.Error = err
+		return
+	}
+	resp.Error = s.orchestrator.SetResult(body.ID, body.Number)
+}
+func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
+	resp := c.ErrorResponse{}
+	defer utils.SendResponse(&resp, w)
+
+	body, err := utils.GetBody[c.RegisterBody](r)
+	if err != nil {
+		resp.Error = err
+		return
+	}
+	resp.Error = s.orchestrator.Register(body.Url)
 }
 
 func (s *Server) Handle(endpoint config.Endpoint, handler http.HandlerFunc) {
@@ -57,18 +97,24 @@ func (s *Server) Handle(endpoint config.Endpoint, handler http.HandlerFunc) {
 	} else {
 		pattern = "/" + endpoint.Url
 	}
-	s.handlers[pattern] = handler
+	s.handlers[pattern] = utils.CheckMethodMiddleware(handler, endpoint.Method)
 }
 
 func (s *Server) Run() {
 	mux := http.NewServeMux()
 
 	s.Handle(s.scheme.AddTask, s.handleAddTask)
-	s.Handle(s.scheme.GetResult, s.handleGetResult)
+	s.Handle(s.scheme.GetTask, s.handleGetTask)
+	s.Handle(s.scheme.GetTasksData, s.handleGetTasksData)
+	s.Handle(s.scheme.GetAgentsData, s.handleGetAgentsData)
+	s.Handle(s.scheme.GetOperationsTimeouts, s.handleGetOperationsTimeouts)
+	s.Handle(s.scheme.SetOperationsTimeouts, s.handleSetOperationsTimeouts)
+	s.Handle(s.scheme.SetResult, s.handleSetResult)
+	s.Handle(s.scheme.Register, s.handleRegister)
 
 	for pattern, handler := range s.handlers {
 		fmt.Printf("handling %v\n", pattern)
-		mux.HandleFunc(pattern, handler)
+		mux.Handle(pattern, handler)
 	}
 
 	s.orchestrator.Run(s.Url)
@@ -76,5 +122,5 @@ func (s *Server) Run() {
 }
 
 func New(orchestrator *orchestrator.Orchestrator, url string, scheme config.OrchestratorScheme) *Server {
-	return &Server{orchestrator: orchestrator, scheme: scheme, Url: url, handlers: make(map[string]http.HandlerFunc)}
+	return &Server{orchestrator: orchestrator, scheme: scheme, Url: url, handlers: make(map[string]http.Handler)}
 }

@@ -4,16 +4,15 @@
 		"url": "addTask",
 		"method": "POST"
 	},
-	"getTasksStatus": {
-		"url": "getTasksStatus",
+	"getTasksData": {
+		"url": "tasks",
 		"method": "GET"
 	},
-	"getResult": {
-		"url": "getResult",
-		"method": "GET",
-		"restParams": ["id"]
+	"getAgentsData": {
+		"url": "agents",
+		"method":"GET"
 	},
-	"getTaskStatus": {
+	"getOperationsTimeouts": {
 		"url": "getOperationsTimeouts",
 		"method": "GET"
 	},
@@ -35,8 +34,8 @@
 	}
 },
     "agent": {
-        "ping": {
-			"url": "ping",
+        "getStatus": {
+			"url": "status",
 			"method": "GET"
 		}
     }

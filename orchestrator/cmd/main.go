@@ -1,16 +1,15 @@
 package main
 
 import (
-	"sync"
+	"fmt"
 
+	"github.com/eonias189/calculationService/orchestrator/internal/api"
 	c "github.com/eonias189/calculationService/orchestrator/internal/config"
-	"github.com/eonias189/calculationService/orchestrator/internal/server"
-	"github.com/eonias189/calculationService/orchestrator/pkg/orchestrator"
 )
 
 func main() {
 	asp, _ := c.NewApiSchemeProvider()
-	orch := orchestrator.New()
+	/* orch := orchestrator.New()
 	s := server.New(orch, ":8081", asp.GetOrchestratorScheme())
 
 	var wg sync.WaitGroup
@@ -21,5 +20,7 @@ func main() {
 		s.Run()
 	}()
 
-	wg.Wait()
+	wg.Wait() */
+	api := api.NewAgentApi("http://127.0.0.1:8081", asp.GetAgentScheme())
+	fmt.Println(api.GetStatus())
 }

@@ -72,18 +72,20 @@ func DoRequest[B interface{}, RP interface{}, R interface{}](cli *http.Client, u
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	respReader, err := cli.Do(req)
+	resp, err := cli.Do(req)
 	if err != nil {
 		return err
 	}
-	// fmt.Println(path)
+	fmt.Println(path)
 
-	defer respReader.Body.Close()
-	respBytes, err := io.ReadAll(respReader.Body)
+	defer resp.Body.Close()
+	respBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
-
+	if resp.StatusCode != 200 {
+		return fmt.Errorf(string(respBytes))
+	}
 	err = json.Unmarshal(respBytes, params.Response)
 	return err
 
@@ -109,9 +111,13 @@ func GetBody[B any](r *http.Request) (B, error) {
 	return body, err
 }
 
-func SendResponse[R any](resp *R, w http.ResponseWriter) {
+func SendResponse[R interface{ GetError() error }](resp R, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
-	data, _ := json.Marshal(*resp)
+	if resp.GetError() != nil {
+		http.Error(w, resp.GetError().Error(), http.StatusInternalServerError)
+		return
+	}
+	data, _ := json.Marshal(resp)
 	fmt.Fprint(w, string(data))
 }
 
@@ -132,13 +138,24 @@ func ParseRestParams[RP any](r *http.Request, endpoint config.Endpoint) (RP, err
 	return res, err
 }
 
+func CheckMethodMiddleware(next http.Handler, method string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.ToUpper(method) != strings.ToUpper(r.Method) {
+			SendResponse(&c.ErrorResponse{Error: fmt.Errorf("handling only %v requests", method)}, w)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func LogMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(r.URL.String())
 		defer func() {
 			if err := recover(); err != nil {
 				fmt.Println(err)
-				SendResponse(&c.ErrorResponse{Error: "service error"}, w)
+				SendResponse(&c.ErrorResponse{Error: fmt.Errorf(fmt.Sprint(err))}, w)
+
 			}
 		}()
 		next.ServeHTTP(w, r)

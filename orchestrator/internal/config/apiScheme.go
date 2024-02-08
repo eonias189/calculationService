@@ -13,8 +13,8 @@ import (
 
 type OrchestratorScheme struct {
 	AddTask               Endpoint `json:"addTask"`
-	GetTasksStatus        Endpoint `json:"getTasksStatus"`
-	GetResult             Endpoint `json:"getResult"`
+	GetTasksData          Endpoint `json:"getTasksData"`
+	GetAgentsData         Endpoint `json:"getAgentsData"`
 	GetOperationsTimeouts Endpoint `json:"getOperationsTimeouts"`
 	SetOperationsTimeouts Endpoint `json:"setOperationsTimeouts"`
 	GetTask               Endpoint `json:"getTask"`
@@ -23,7 +23,7 @@ type OrchestratorScheme struct {
 }
 
 type AgentScheme struct {
-	Ping Endpoint `json:"ping"`
+	GetAgentStatus Endpoint `json:"getStatus"`
 }
 
 type Endpoint struct {

@@ -22,6 +22,8 @@ func main() {
 	}()
 
 	wg.Wait()
-	// api := api.NewOrchestratorApi("http://127.0.0.1:5000", asp.GetOrchestratorScheme())
-	// fmt.Println(api.AddTask(contract.Task{ID: "69", Expression: "1000 - 7"}))
+	/* api := api.NewOrchestratorApi("http://127.0.0.1:8081", asp.GetOrchestratorScheme())
+	fmt.Println(api.GetTask())
+	fmt.Println(api.SetResult("69", 993))
+	fmt.Println(api.Register("lala")) */
 }

@@ -4,18 +4,19 @@ type AddTaskBody struct {
 	Task Task `json:"task"`
 }
 
-type GetTasksStatusResponse struct {
+type GetTasksDataResponse struct {
 	ErrorResponse
-	TasksStatus []TaskStatus `json:"tasksStatus"`
+	TasksData []TaskData `json:"data"`
 }
 
-type GetResultRestParams struct {
-	ID string `json:"id"`
+type GetAgentsDataResponse struct {
+	ErrorResponse
+	Data []AgentData `json:"data"`
 }
 
-type GetResultResponse struct {
-	ErrorResponse
-	Number int `json:"number"`
+type AgentData struct {
+	Ping int `json:"ping"`
+	AgentStatus
 }
 
 type GetOperationsTimeoutsResponse struct {

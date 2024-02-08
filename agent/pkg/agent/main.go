@@ -2,14 +2,16 @@ package agent
 
 import (
 	"fmt"
+
+	c "github.com/eonias189/calculationService/agent/contract"
 )
 
 type Agent struct {
 }
 
-func (o *Agent) Ping() (bool, error) {
+func (o *Agent) GetAgentStatus() (c.AgentStatus, error) {
 	fmt.Println("this is Agent")
-	return true, nil
+	return c.AgentStatus{MaxThreadsNumber: 5, ThreadsRuning: 3}, nil
 }
 
 func (o *Agent) Run(url string) {

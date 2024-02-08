@@ -1,6 +1,11 @@
 package contract
 
-type PingResponse struct {
+type GetAgentStatusResponse struct {
 	ErrorResponse
-	Ok bool `json:"ok"`
+	Status AgentStatus `json:"status"`
+}
+
+type AgentStatus struct {
+	ThreadsRuning    int `json:"threadsRuning"`
+	MaxThreadsNumber int `json:"maxThreadsNumber"`
 }
