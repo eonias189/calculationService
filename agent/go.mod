@@ -1,3 +1,3 @@
-module github.com/eonias189/calculationService/agent
+module agent
 
 go 1.21.0

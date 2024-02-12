@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package contract;
+
+option go_package = "/contract";
+
+enum TaskStatus {
+    pending = 0;
+    execution = 1;
+    done = 2;
+}
+
+message Timeouts {
+    int64 add = 1;
+    int64 substract = 2;
+    int64 multiply = 3;
+    int64 divide = 4;
+}
+
+message Task {
+    string id = 1;
+    string expression = 2;
+    int64 result = 3;
+    TaskStatus status = 4;
+    Timeouts timeouts = 5;
+}
+
+message GetTaskResp {
+    Task task = 1;
+}
+
+message GetTasksResp {
+    repeated Task tasks = 1;
+}
+
+message GetTimeoutsResp {
+    Timeouts timeouts = 1;
+}
+
+message SetTimeoutsBody {
+    Timeouts timeouts = 1;
+}
+
+message SetTimeoutsResp {
+    bool ok = 1;
+}
+
+message AddTaskBody {
+    string expression = 1;
+}
+
+message AddTaskResp {
+    bool ok = 1;
+}
+
+
+message SetResultBody {
+    string id = 1;
+    int64 result = 2;
+}
+
+message SetResultResp {
+    bool ok = 1;
+}
+
+
+message RegisterBody {
+    string url = 1;
+}
+
+message RegisterResp {
+    bool ok = 1;
+}
+
+message AgentStatus {
+    int64 maxThreads = 1;
+    int64 executingThreads = 2;
+}
+
+message GetAgentStatusResp {
+    AgentStatus status = 1;
+}
+
+message AgentData  {
+    int64 ping = 1;
+    AgentStatus status = 2;
+}
+
+message GetAgentsResp {
+    repeated AgentData agents = 1;
+}

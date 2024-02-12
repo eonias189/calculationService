@@ -1,3 +1,3 @@
-module github.com/eonias189/calculationService/orchestrator
+module orchestrator
 
 go 1.21.0

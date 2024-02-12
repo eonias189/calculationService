@@ -1,0 +1,12 @@
+endpoints:
+    agent:
+        /status/    get
+    orchestrator:
+        /addTask        post
+        /getTask/        get
+        /getTasks/       get
+        /getAgents/      get
+        /getTimeouts/    get
+        /setTimeouts/   post
+        /setResult/     post
+        /register/      post

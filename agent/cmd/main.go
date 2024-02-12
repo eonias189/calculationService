@@ -1,29 +1,40 @@
 package main
 
 import (
-	"sync"
-
-	c "github.com/eonias189/calculationService/agent/internal/config"
-	"github.com/eonias189/calculationService/agent/internal/server"
-	"github.com/eonias189/calculationService/agent/pkg/agent"
+	"agent/agent"
+	"agent/internal/api"
+	"agent/internal/server"
+	"fmt"
+	"os"
+	"strconv"
 )
 
+func getPort() (string, error) {
+	if len(os.Args) < 2 {
+		return "", fmt.Errorf("port not defined")
+	}
+	port := os.Args[1]
+	if len(port) < 2 {
+		return "", fmt.Errorf("invalid port")
+	}
+	if port[0] != ':' {
+		return "", fmt.Errorf("invalid port")
+	}
+	_, err := strconv.Atoi(port[1:])
+	if err != nil {
+		return "", fmt.Errorf("invalid port")
+	}
+	return port, nil
+}
+
 func main() {
-	asp, _ := c.NewApiSchemeProvider()
-	agent := agent.New()
-	s := server.New(agent, ":8081", asp.GetAgentScheme())
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-		s.Run()
-	}()
-
-	wg.Wait()
-	/* api := api.NewOrchestratorApi("http://127.0.0.1:8081", asp.GetOrchestratorScheme())
-	fmt.Println(api.GetTask())
-	fmt.Println(api.SetResult("69", 993))
-	fmt.Println(api.Register("lala")) */
+	port, err := getPort()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	api := api.NewOrchestratorApi("http://127.0.0.1:8081")
+	agent := agent.New(api)
+	s := server.NewServer(agent, port)
+	s.Run()
 }

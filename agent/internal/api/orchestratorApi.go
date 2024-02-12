@@ -1,43 +1,38 @@
 package api
 
 import (
+	c "backend/contract"
+	"backend/utils"
 	"net/http"
-
-	c "github.com/eonias189/calculationService/agent/contract"
-	"github.com/eonias189/calculationService/agent/internal/config"
-	"github.com/eonias189/calculationService/agent/internal/utils"
 )
 
 type OrchestratorApi struct {
-	scheme config.OrchestratorScheme
-	cli    *http.Client
-	Url    string
+	cli *http.Client
+	Url string
 }
 
-func (o *OrchestratorApi) GetTask() (c.Task, error) {
-	resp := &c.GetTaskResponse{}
+func (oa *OrchestratorApi) GetTask() (c.Task, error) {
+	resp := c.GetTaskResp{}
 	body := utils.None{}
-	respParams := utils.None{}
-	params := utils.NewRequestParams(body, respParams, resp)
-	err := utils.DoRequest(o.cli, o.Url, o.scheme.GetTask, params)
-	return resp.Task, err
+	err := utils.DoRequest(oa.cli, oa.Url, "getTask", "GET", body, &resp)
+	if err != nil {
+		return c.Task{}, err
+	}
+	return *resp.Task, err
 }
 
-func (o *OrchestratorApi) SetResult(id string, res int) error {
-	resp := &c.ErrorResponse{}
-	body := c.SetResultBody{ID: id, Number: res}
-	restParams := utils.None{}
-	params := utils.NewRequestParams(body, restParams, resp)
-	return utils.DoRequest(o.cli, o.Url, o.scheme.SetResult, params)
+func (oa *OrchestratorApi) SetResult(id string, result int) error {
+	resp := c.SetResultResp{}
+	body := c.SetResultBody{Id: id, Result: int64(result)}
+	return utils.DoRequest(oa.cli, oa.Url, "setResult", "POST", body, &resp)
 }
-func (o *OrchestratorApi) Register(url string) error {
-	resp := &c.ErrorResponse{}
+
+func (os *OrchestratorApi) Register(url string) error {
+	resp := c.RegisterResp{}
 	body := c.RegisterBody{Url: url}
-	restParams := utils.None{}
-	params := utils.NewRequestParams(body, restParams, resp)
-	return utils.DoRequest(o.cli, o.Url, o.scheme.Register, params)
+	return utils.DoRequest(os.cli, os.Url, "register", "POST", body, &resp)
 }
 
-func NewOrchestratorApi(url string, sheme config.OrchestratorScheme) *OrchestratorApi {
-	return &OrchestratorApi{Url: url, scheme: sheme, cli: &http.Client{}}
+func NewOrchestratorApi(url string) *OrchestratorApi {
+	return &OrchestratorApi{cli: &http.Client{}, Url: url}
 }
