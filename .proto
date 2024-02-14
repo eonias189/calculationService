@@ -22,11 +22,11 @@ message Task {
     string expression = 2;
     int64 result = 3;
     TaskStatus status = 4;
-    Timeouts timeouts = 5;
 }
 
 message GetTaskResp {
     Task task = 1;
+    Timeouts timeouts = 2;
 }
 
 message GetTasksResp {
@@ -82,8 +82,10 @@ message GetAgentStatusResp {
 }
 
 message AgentData  {
-    int64 ping = 1;
-    AgentStatus status = 2;
+    int64 id = 1;
+    string url = 2;
+    int64 ping = 3;
+    AgentStatus status = 4;
 }
 
 message GetAgentsResp {

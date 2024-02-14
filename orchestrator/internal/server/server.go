@@ -33,12 +33,13 @@ func (s *Server) handleAddTask(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleGetTask(w http.ResponseWriter, r *http.Request) {
 	resp := c.GetTaskResp{}
 
-	task, err := s.orchestrator.GetTask()
+	task, timeouts, err := s.orchestrator.GetTask()
 	if err != nil {
 		utils.SendError(err, w)
 		return
 	}
 	resp.Task = &task
+	resp.Timeouts = &timeouts
 
 	utils.SendResponse(&resp, w)
 }

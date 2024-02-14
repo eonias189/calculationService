@@ -15,9 +15,9 @@ func (o *Orchestrator) AddTask(expression string) error {
 	fmt.Println("adding Task", expression)
 	return nil
 }
-func (o *Orchestrator) GetTask() (c.Task, error) {
+func (o *Orchestrator) GetTask() (c.Task, c.Timeouts, error) {
 	fmt.Println("sending task")
-	return c.Task{Id: "69", Expression: "1000 - 7", Timeouts: &c.Timeouts{Add: 4, Substract: 2, Multiply: 2, Divide: 88}}, nil
+	return c.Task{Id: "69", Expression: "1000 - 7"}, c.Timeouts{Add: 4, Substract: 2, Multiply: 2, Divide: 88}, nil
 }
 func (o *Orchestrator) GetTasks() ([]c.Task, error) {
 	fmt.Println("sending tasks")
