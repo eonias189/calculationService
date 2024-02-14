@@ -26,7 +26,8 @@ func (o *Orchestrator) GetTasks() ([]c.Task, error) {
 func (o *Orchestrator) GetAgents() ([]c.AgentData, error) {
 	fmt.Println("sending agents data")
 	return []c.AgentData{
-		{Ping: 83, Status: &c.AgentStatus{ExecutingThreads: 3, MaxThreads: 5}},
+		{Id: 1, Ping: 83, Status: &c.AgentStatus{ExecutingThreads: 3, MaxThreads: 5}},
+		{Id: 2, Ping: 43, Status: &c.AgentStatus{ExecutingThreads: 16, MaxThreads: 20}},
 	}, nil
 }
 func (o *Orchestrator) GetTimeouts() (c.Timeouts, error) {

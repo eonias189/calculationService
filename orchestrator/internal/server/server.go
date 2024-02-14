@@ -53,7 +53,8 @@ func (s *Server) handleGetTasks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, task := range tasks {
-		resp.Tasks = append(resp.Tasks, &task)
+		curTask := task
+		resp.Tasks = append(resp.Tasks, &curTask)
 	}
 	utils.SendResponse(&resp, w)
 }
@@ -67,7 +68,8 @@ func (s *Server) handleGetAgents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, agent := range agents {
-		resp.Agents = append(resp.Agents, &agent)
+		curAgent := agent
+		resp.Agents = append(resp.Agents, &curAgent)
 	}
 
 	utils.SendResponse(&resp, w)
@@ -138,6 +140,20 @@ func (s *Server) Handle(pattern, method string, handler http.HandlerFunc) {
 	s.mux.Handle(pattern, utils.CheckMethodMiddleware(handler, method))
 }
 
+func setCorsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		header := w.Header()
+		header.Add("Access-Control-Allow-Origin", "*")
+		header.Add("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
+		header.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (s *Server) Run() {
 	s.orchestrator.Run("http://127.0.0.1" + s.Port)
 
@@ -150,7 +166,7 @@ func (s *Server) Run() {
 	s.Handle("/setResult", "post", s.handleSetResult)
 	s.Handle("/register", "post", s.handleRegister)
 
-	http.ListenAndServe(s.Port, utils.LogMiddleware(s.mux))
+	http.ListenAndServe(s.Port, utils.LogMiddleware(setCorsMiddleware(s.mux)))
 
 }
 

@@ -75,6 +75,7 @@ func GetBody[B any](r *http.Request) (B, error) {
 	if err != nil {
 		return body, err
 	}
+	// fmt.Println(string(reqBodyData))
 
 	err = json.Unmarshal(reqBodyData, &body)
 	return body, err
