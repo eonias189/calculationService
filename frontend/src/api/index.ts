@@ -6,7 +6,7 @@ const URL = "http://127.0.0.1:8081/";
 
 export const fetchTasks = async (): Promise<contract.Task[]> => {
     const resp = await axios.get(URL + "getTasks");
-    return contract.GetTasksResp.fromObject(resp.data).tasks;
+    return contract.GetTasksResp.fromObject(resp.data).tasks.reverse();
 };
 
 export const addTask = async (expression: string) => {
