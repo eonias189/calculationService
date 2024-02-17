@@ -15,26 +15,26 @@ func (o *Orchestrator) AddTask(expression string) error {
 	fmt.Println("adding Task", expression)
 	return nil
 }
-func (o *Orchestrator) GetTask() (c.Task, c.Timeouts, error) {
+func (o *Orchestrator) GetTask() (*c.Task, *c.Timeouts, error) {
 	fmt.Println("sending task")
-	return c.Task{Id: "69", Expression: "1000 - 7"}, c.Timeouts{Add: 4, Substract: 2, Multiply: 2, Divide: 88}, nil
+	return &c.Task{Id: "69", Expression: "1000 - 7"}, &c.Timeouts{Add: 4, Substract: 2, Multiply: 2, Divide: 88}, nil
 }
-func (o *Orchestrator) GetTasks() ([]c.Task, error) {
+func (o *Orchestrator) GetTasks() ([]*c.Task, error) {
 	fmt.Println("sending tasks")
-	return []c.Task{{Id: "69", Expression: "1000 - 7"}, {Id: "68", Expression: "993 + 7"}}, nil
+	return []*c.Task{{Id: "69", Expression: "1000 - 7"}, {Id: "68", Expression: "993 + 7"}}, nil
 }
-func (o *Orchestrator) GetAgents() ([]c.AgentData, error) {
+func (o *Orchestrator) GetAgents() ([]*c.AgentData, error) {
 	fmt.Println("sending agents data")
-	return []c.AgentData{
+	return []*c.AgentData{
 		{Id: 1, Ping: 83, Status: &c.AgentStatus{ExecutingThreads: 3, MaxThreads: 5}},
 		{Id: 2, Ping: 43, Status: &c.AgentStatus{ExecutingThreads: 16, MaxThreads: 20}},
 	}, nil
 }
-func (o *Orchestrator) GetTimeouts() (c.Timeouts, error) {
+func (o *Orchestrator) GetTimeouts() (*c.Timeouts, error) {
 	fmt.Println("sending timeouts")
-	return c.Timeouts{Add: 1, Substract: 2, Multiply: 3, Divide: 4}, nil
+	return &c.Timeouts{Add: 1, Substract: 2, Multiply: 3, Divide: 4}, nil
 }
-func (o *Orchestrator) SetTimeouts(timeouts c.Timeouts) error {
+func (o *Orchestrator) SetTimeouts(timeouts *c.Timeouts) error {
 	fmt.Println("setting timeouts", timeouts.Add, timeouts.Substract, timeouts.Multiply, timeouts.Divide)
 	return nil
 }

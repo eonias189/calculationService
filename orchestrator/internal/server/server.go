@@ -38,8 +38,8 @@ func (s *Server) handleGetTask(w http.ResponseWriter, r *http.Request) {
 		utils.SendError(err, w)
 		return
 	}
-	resp.Task = &task
-	resp.Timeouts = &timeouts
+	resp.Task = task
+	resp.Timeouts = timeouts
 
 	utils.SendResponse(&resp, w)
 }
@@ -52,10 +52,7 @@ func (s *Server) handleGetTasks(w http.ResponseWriter, r *http.Request) {
 		utils.SendError(err, w)
 		return
 	}
-	for _, task := range tasks {
-		curTask := task
-		resp.Tasks = append(resp.Tasks, &curTask)
-	}
+	resp.Tasks = tasks
 	utils.SendResponse(&resp, w)
 }
 
@@ -67,10 +64,7 @@ func (s *Server) handleGetAgents(w http.ResponseWriter, r *http.Request) {
 		utils.SendError(err, w)
 		return
 	}
-	for _, agent := range agents {
-		curAgent := agent
-		resp.Agents = append(resp.Agents, &curAgent)
-	}
+	resp.Agents = agents
 
 	utils.SendResponse(&resp, w)
 }
@@ -84,7 +78,7 @@ func (s *Server) handleGetTimeouts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp.Timeouts = &timeouts
+	resp.Timeouts = timeouts
 	utils.SendResponse(&resp, w)
 }
 
@@ -95,7 +89,7 @@ func (s *Server) handleSetTimeouts(w http.ResponseWriter, r *http.Request) {
 		utils.SendError(err, w)
 		return
 	}
-	err = s.orchestrator.SetTimeouts(*body.Timeouts)
+	err = s.orchestrator.SetTimeouts(body.Timeouts)
 	if err != nil {
 		utils.SendError(err, w)
 		return

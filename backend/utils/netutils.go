@@ -26,10 +26,10 @@ func ObjToMap(o any) (map[string]string, error) {
 	return res, nil
 }
 
-func DoRequest[B, R any](cli *http.Client, url, endpoint, method string, body B, response *R) error {
+func DoRequest[B, R any](cli *http.Client, url, endpoint, method string, body *B, response *R) error {
 	path := url + "/" + endpoint
 
-	bodyBytes, err := json.Marshal(body)
+	bodyBytes, err := json.Marshal(*body)
 	if err != nil {
 		return err
 	}
