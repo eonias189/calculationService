@@ -8,7 +8,8 @@ import (
 )
 
 type Agent struct {
-	api *api.OrchestratorApi
+	api     *api.OrchestratorApi
+	threads int
 }
 
 func (o *Agent) GetAgentStatus() (c.AgentStatus, error) {
@@ -17,10 +18,10 @@ func (o *Agent) GetAgentStatus() (c.AgentStatus, error) {
 }
 
 func (o *Agent) Run(url string) {
-	fmt.Println("starting at", url)
+	fmt.Println("starting at", url, "with", o.threads, "threads")
 	o.api.Register(url)
 }
 
-func New(api *api.OrchestratorApi) *Agent {
-	return &Agent{api: api}
+func New(api *api.OrchestratorApi, threads int) *Agent {
+	return &Agent{api: api, threads: threads}
 }

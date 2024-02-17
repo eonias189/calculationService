@@ -10,7 +10,7 @@ import (
 
 type Server struct {
 	mux   *http.ServeMux
-	Port  string
+	Port  int
 	agent *agent.Agent
 }
 
@@ -31,13 +31,13 @@ func (s *Server) handleGetStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) Run() {
-	s.agent.Run("http://127.0.0.1" + s.Port)
+	s.agent.Run(fmt.Sprintf("http://127.0.0.1:%v", s.Port))
 
 	s.Handle("/status/", "get", s.handleGetStatus)
 
-	http.ListenAndServe(s.Port, utils.LogMiddleware(s.mux))
+	http.ListenAndServe(fmt.Sprintf(":%v", s.Port), utils.LogMiddleware(s.mux))
 }
 
-func NewServer(agent *agent.Agent, port string) *Server {
+func NewServer(agent *agent.Agent, port int) *Server {
 	return &Server{mux: http.NewServeMux(), Port: port, agent: agent}
 }
