@@ -2,7 +2,6 @@
 import { addTask, fetchTasks } from "@/api";
 import Task from "@/components/task";
 import Button from "@/components/ui/button";
-import { contract } from "@/contract";
 import Input from "@/components/ui/input";
 import { FC, useEffect, useState } from "react";
 import { useFetcher } from "@/hooks/useFetcher";
