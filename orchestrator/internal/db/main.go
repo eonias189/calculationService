@@ -15,7 +15,9 @@ func NewDB(path string) (*DB, error) {
 		id text NOT NULL PRIMARY KEY,
 		expression text,
 		result int,
-		status text
+		agentId int,
+		status text,
+		FOREIGN KEY (agentId) REFERENCES agents(id)
 	);`
 	agentsScheme := `CREATE TABLE IF NOT EXISTS agents (
 		id INTEGER NOT NULL PRIMARY KEY,

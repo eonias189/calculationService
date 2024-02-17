@@ -8,6 +8,7 @@ enum TaskStatus {
     pending = 0;
     execution = 1;
     done = 2;
+    executionError = 3;
 }
 
 message Timeouts {
@@ -21,7 +22,8 @@ message Task {
     string id = 1;
     string expression = 2;
     int64 result = 3;
-    TaskStatus status = 4;
+    int64 agentId = 4;
+    TaskStatus status = 5;
 }
 
 message GetTaskResp {

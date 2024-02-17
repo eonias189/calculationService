@@ -9,19 +9,16 @@ export namespace contract {
         pending = 0,
         execution = 1,
         done = 2,
+        executionError = 3
     }
     export class Timeouts extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      add?: number;
-                      substract?: number;
-                      multiply?: number;
-                      divide?: number;
-                  }
-        ) {
+        constructor(data?: any[] | {
+            add?: number;
+            substract?: number;
+            multiply?: number;
+            divide?: number;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -109,17 +106,22 @@ export namespace contract {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.add != 0) writer.writeInt64(1, this.add);
-            if (this.substract != 0) writer.writeInt64(2, this.substract);
-            if (this.multiply != 0) writer.writeInt64(3, this.multiply);
-            if (this.divide != 0) writer.writeInt64(4, this.divide);
-            if (!w) return writer.getResultBuffer();
+            if (this.add != 0)
+                writer.writeInt64(1, this.add);
+            if (this.substract != 0)
+                writer.writeInt64(2, this.substract);
+            if (this.multiply != 0)
+                writer.writeInt64(3, this.multiply);
+            if (this.divide != 0)
+                writer.writeInt64(4, this.divide);
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): Timeouts {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new Timeouts();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new Timeouts();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
                         message.add = reader.readInt64();
@@ -133,8 +135,7 @@ export namespace contract {
                     case 4:
                         message.divide = reader.readInt64();
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -148,16 +149,13 @@ export namespace contract {
     }
     export class Task extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      id?: string;
-                      expression?: string;
-                      result?: number;
-                      status?: TaskStatus;
-                  }
-        ) {
+        constructor(data?: any[] | {
+            id?: string;
+            expression?: string;
+            result?: number;
+            agentId?: number;
+            status?: TaskStatus;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -169,6 +167,9 @@ export namespace contract {
                 }
                 if ("result" in data && data.result != undefined) {
                     this.result = data.result;
+                }
+                if ("agentId" in data && data.agentId != undefined) {
+                    this.agentId = data.agentId;
                 }
                 if ("status" in data && data.status != undefined) {
                     this.status = data.status;
@@ -193,16 +194,23 @@ export namespace contract {
         set result(value: number) {
             pb_1.Message.setField(this, 3, value);
         }
+        get agentId() {
+            return pb_1.Message.getFieldWithDefault(this, 4, 0) as number;
+        }
+        set agentId(value: number) {
+            pb_1.Message.setField(this, 4, value);
+        }
         get status() {
-            return pb_1.Message.getFieldWithDefault(this, 4, TaskStatus.pending) as TaskStatus;
+            return pb_1.Message.getFieldWithDefault(this, 5, TaskStatus.pending) as TaskStatus;
         }
         set status(value: TaskStatus) {
-            pb_1.Message.setField(this, 4, value);
+            pb_1.Message.setField(this, 5, value);
         }
         static fromObject(data: {
             id?: string;
             expression?: string;
             result?: number;
+            agentId?: number;
             status?: TaskStatus;
         }): Task {
             const message = new Task({});
@@ -215,6 +223,9 @@ export namespace contract {
             if (data.result != null) {
                 message.result = data.result;
             }
+            if (data.agentId != null) {
+                message.agentId = data.agentId;
+            }
             if (data.status != null) {
                 message.status = data.status;
             }
@@ -225,6 +236,7 @@ export namespace contract {
                 id?: string;
                 expression?: string;
                 result?: number;
+                agentId?: number;
                 status?: TaskStatus;
             } = {};
             if (this.id != null) {
@@ -236,6 +248,9 @@ export namespace contract {
             if (this.result != null) {
                 data.result = this.result;
             }
+            if (this.agentId != null) {
+                data.agentId = this.agentId;
+            }
             if (this.status != null) {
                 data.status = this.status;
             }
@@ -245,17 +260,24 @@ export namespace contract {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.id.length) writer.writeString(1, this.id);
-            if (this.expression.length) writer.writeString(2, this.expression);
-            if (this.result != 0) writer.writeInt64(3, this.result);
-            if (this.status != TaskStatus.pending) writer.writeEnum(4, this.status);
-            if (!w) return writer.getResultBuffer();
+            if (this.id.length)
+                writer.writeString(1, this.id);
+            if (this.expression.length)
+                writer.writeString(2, this.expression);
+            if (this.result != 0)
+                writer.writeInt64(3, this.result);
+            if (this.agentId != 0)
+                writer.writeInt64(4, this.agentId);
+            if (this.status != TaskStatus.pending)
+                writer.writeEnum(5, this.status);
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): Task {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new Task();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new Task();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
                         message.id = reader.readString();
@@ -267,10 +289,12 @@ export namespace contract {
                         message.result = reader.readInt64();
                         break;
                     case 4:
+                        message.agentId = reader.readInt64();
+                        break;
+                    case 5:
                         message.status = reader.readEnum();
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -284,14 +308,10 @@ export namespace contract {
     }
     export class GetTaskResp extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      task?: Task;
-                      timeouts?: Timeouts;
-                  }
-        ) {
+        constructor(data?: any[] | {
+            task?: Task;
+            timeouts?: Timeouts;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -351,28 +371,26 @@ export namespace contract {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.has_task) writer.writeMessage(1, this.task, () => this.task.serialize(writer));
+            if (this.has_task)
+                writer.writeMessage(1, this.task, () => this.task.serialize(writer));
             if (this.has_timeouts)
                 writer.writeMessage(2, this.timeouts, () => this.timeouts.serialize(writer));
-            if (!w) return writer.getResultBuffer();
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): GetTaskResp {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new GetTaskResp();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new GetTaskResp();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
-                        reader.readMessage(message.task, () => (message.task = Task.deserialize(reader)));
+                        reader.readMessage(message.task, () => message.task = Task.deserialize(reader));
                         break;
                     case 2:
-                        reader.readMessage(
-                            message.timeouts,
-                            () => (message.timeouts = Timeouts.deserialize(reader))
-                        );
+                        reader.readMessage(message.timeouts, () => message.timeouts = Timeouts.deserialize(reader));
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -386,13 +404,9 @@ export namespace contract {
     }
     export class GetTasksResp extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      tasks?: Task[];
-                  }
-        ) {
+        constructor(data?: any[] | {
+            tasks?: Task[];
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [1], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -407,10 +421,12 @@ export namespace contract {
         set tasks(value: Task[]) {
             pb_1.Message.setRepeatedWrapperField(this, 1, value);
         }
-        static fromObject(data: { tasks?: ReturnType<typeof Task.prototype.toObject>[] }): GetTasksResp {
+        static fromObject(data: {
+            tasks?: ReturnType<typeof Task.prototype.toObject>[];
+        }): GetTasksResp {
             const message = new GetTasksResp({});
             if (data.tasks != null) {
-                message.tasks = data.tasks.map((item) => Task.fromObject(item));
+                message.tasks = data.tasks.map(item => Task.fromObject(item));
             }
             return message;
         }
@@ -429,26 +445,19 @@ export namespace contract {
             const writer = w || new pb_1.BinaryWriter();
             if (this.tasks.length)
                 writer.writeRepeatedMessage(1, this.tasks, (item: Task) => item.serialize(writer));
-            if (!w) return writer.getResultBuffer();
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): GetTasksResp {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new GetTasksResp();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new GetTasksResp();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
-                        reader.readMessage(message.tasks, () =>
-                            pb_1.Message.addToRepeatedWrapperField(
-                                message,
-                                1,
-                                Task.deserialize(reader),
-                                Task
-                            )
-                        );
+                        reader.readMessage(message.tasks, () => pb_1.Message.addToRepeatedWrapperField(message, 1, Task.deserialize(reader), Task));
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -462,13 +471,9 @@ export namespace contract {
     }
     export class GetTimeoutsResp extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      timeouts?: Timeouts;
-                  }
-        ) {
+        constructor(data?: any[] | {
+            timeouts?: Timeouts;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -510,22 +515,19 @@ export namespace contract {
             const writer = w || new pb_1.BinaryWriter();
             if (this.has_timeouts)
                 writer.writeMessage(1, this.timeouts, () => this.timeouts.serialize(writer));
-            if (!w) return writer.getResultBuffer();
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): GetTimeoutsResp {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new GetTimeoutsResp();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new GetTimeoutsResp();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
-                        reader.readMessage(
-                            message.timeouts,
-                            () => (message.timeouts = Timeouts.deserialize(reader))
-                        );
+                        reader.readMessage(message.timeouts, () => message.timeouts = Timeouts.deserialize(reader));
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -539,13 +541,9 @@ export namespace contract {
     }
     export class SetTimeoutsBody extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      timeouts?: Timeouts;
-                  }
-        ) {
+        constructor(data?: any[] | {
+            timeouts?: Timeouts;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -587,22 +585,19 @@ export namespace contract {
             const writer = w || new pb_1.BinaryWriter();
             if (this.has_timeouts)
                 writer.writeMessage(1, this.timeouts, () => this.timeouts.serialize(writer));
-            if (!w) return writer.getResultBuffer();
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): SetTimeoutsBody {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new SetTimeoutsBody();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new SetTimeoutsBody();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
-                        reader.readMessage(
-                            message.timeouts,
-                            () => (message.timeouts = Timeouts.deserialize(reader))
-                        );
+                        reader.readMessage(message.timeouts, () => message.timeouts = Timeouts.deserialize(reader));
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -616,13 +611,9 @@ export namespace contract {
     }
     export class SetTimeoutsResp extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      ok?: boolean;
-                  }
-        ) {
+        constructor(data?: any[] | {
+            ok?: boolean;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -637,7 +628,9 @@ export namespace contract {
         set ok(value: boolean) {
             pb_1.Message.setField(this, 1, value);
         }
-        static fromObject(data: { ok?: boolean }): SetTimeoutsResp {
+        static fromObject(data: {
+            ok?: boolean;
+        }): SetTimeoutsResp {
             const message = new SetTimeoutsResp({});
             if (data.ok != null) {
                 message.ok = data.ok;
@@ -657,20 +650,21 @@ export namespace contract {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.ok != false) writer.writeBool(1, this.ok);
-            if (!w) return writer.getResultBuffer();
+            if (this.ok != false)
+                writer.writeBool(1, this.ok);
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): SetTimeoutsResp {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new SetTimeoutsResp();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new SetTimeoutsResp();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
                         message.ok = reader.readBool();
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -684,13 +678,9 @@ export namespace contract {
     }
     export class AddTaskBody extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      expression?: string;
-                  }
-        ) {
+        constructor(data?: any[] | {
+            expression?: string;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -705,7 +695,9 @@ export namespace contract {
         set expression(value: string) {
             pb_1.Message.setField(this, 1, value);
         }
-        static fromObject(data: { expression?: string }): AddTaskBody {
+        static fromObject(data: {
+            expression?: string;
+        }): AddTaskBody {
             const message = new AddTaskBody({});
             if (data.expression != null) {
                 message.expression = data.expression;
@@ -725,20 +717,21 @@ export namespace contract {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.expression.length) writer.writeString(1, this.expression);
-            if (!w) return writer.getResultBuffer();
+            if (this.expression.length)
+                writer.writeString(1, this.expression);
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): AddTaskBody {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new AddTaskBody();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new AddTaskBody();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
                         message.expression = reader.readString();
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -752,13 +745,9 @@ export namespace contract {
     }
     export class AddTaskResp extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      ok?: boolean;
-                  }
-        ) {
+        constructor(data?: any[] | {
+            ok?: boolean;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -773,7 +762,9 @@ export namespace contract {
         set ok(value: boolean) {
             pb_1.Message.setField(this, 1, value);
         }
-        static fromObject(data: { ok?: boolean }): AddTaskResp {
+        static fromObject(data: {
+            ok?: boolean;
+        }): AddTaskResp {
             const message = new AddTaskResp({});
             if (data.ok != null) {
                 message.ok = data.ok;
@@ -793,20 +784,21 @@ export namespace contract {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.ok != false) writer.writeBool(1, this.ok);
-            if (!w) return writer.getResultBuffer();
+            if (this.ok != false)
+                writer.writeBool(1, this.ok);
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): AddTaskResp {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new AddTaskResp();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new AddTaskResp();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
                         message.ok = reader.readBool();
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -820,14 +812,10 @@ export namespace contract {
     }
     export class SetResultBody extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      id?: string;
-                      result?: number;
-                  }
-        ) {
+        constructor(data?: any[] | {
+            id?: string;
+            result?: number;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -851,7 +839,10 @@ export namespace contract {
         set result(value: number) {
             pb_1.Message.setField(this, 2, value);
         }
-        static fromObject(data: { id?: string; result?: number }): SetResultBody {
+        static fromObject(data: {
+            id?: string;
+            result?: number;
+        }): SetResultBody {
             const message = new SetResultBody({});
             if (data.id != null) {
                 message.id = data.id;
@@ -878,15 +869,18 @@ export namespace contract {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.id.length) writer.writeString(1, this.id);
-            if (this.result != 0) writer.writeInt64(2, this.result);
-            if (!w) return writer.getResultBuffer();
+            if (this.id.length)
+                writer.writeString(1, this.id);
+            if (this.result != 0)
+                writer.writeInt64(2, this.result);
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): SetResultBody {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new SetResultBody();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new SetResultBody();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
                         message.id = reader.readString();
@@ -894,8 +888,7 @@ export namespace contract {
                     case 2:
                         message.result = reader.readInt64();
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -909,13 +902,9 @@ export namespace contract {
     }
     export class SetResultResp extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      ok?: boolean;
-                  }
-        ) {
+        constructor(data?: any[] | {
+            ok?: boolean;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -930,7 +919,9 @@ export namespace contract {
         set ok(value: boolean) {
             pb_1.Message.setField(this, 1, value);
         }
-        static fromObject(data: { ok?: boolean }): SetResultResp {
+        static fromObject(data: {
+            ok?: boolean;
+        }): SetResultResp {
             const message = new SetResultResp({});
             if (data.ok != null) {
                 message.ok = data.ok;
@@ -950,20 +941,21 @@ export namespace contract {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.ok != false) writer.writeBool(1, this.ok);
-            if (!w) return writer.getResultBuffer();
+            if (this.ok != false)
+                writer.writeBool(1, this.ok);
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): SetResultResp {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new SetResultResp();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new SetResultResp();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
                         message.ok = reader.readBool();
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -977,13 +969,9 @@ export namespace contract {
     }
     export class RegisterBody extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      url?: string;
-                  }
-        ) {
+        constructor(data?: any[] | {
+            url?: string;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -998,7 +986,9 @@ export namespace contract {
         set url(value: string) {
             pb_1.Message.setField(this, 1, value);
         }
-        static fromObject(data: { url?: string }): RegisterBody {
+        static fromObject(data: {
+            url?: string;
+        }): RegisterBody {
             const message = new RegisterBody({});
             if (data.url != null) {
                 message.url = data.url;
@@ -1018,20 +1008,21 @@ export namespace contract {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.url.length) writer.writeString(1, this.url);
-            if (!w) return writer.getResultBuffer();
+            if (this.url.length)
+                writer.writeString(1, this.url);
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): RegisterBody {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new RegisterBody();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new RegisterBody();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
                         message.url = reader.readString();
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -1045,13 +1036,9 @@ export namespace contract {
     }
     export class RegisterResp extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      ok?: boolean;
-                  }
-        ) {
+        constructor(data?: any[] | {
+            ok?: boolean;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -1066,7 +1053,9 @@ export namespace contract {
         set ok(value: boolean) {
             pb_1.Message.setField(this, 1, value);
         }
-        static fromObject(data: { ok?: boolean }): RegisterResp {
+        static fromObject(data: {
+            ok?: boolean;
+        }): RegisterResp {
             const message = new RegisterResp({});
             if (data.ok != null) {
                 message.ok = data.ok;
@@ -1086,20 +1075,21 @@ export namespace contract {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.ok != false) writer.writeBool(1, this.ok);
-            if (!w) return writer.getResultBuffer();
+            if (this.ok != false)
+                writer.writeBool(1, this.ok);
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): RegisterResp {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new RegisterResp();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new RegisterResp();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
                         message.ok = reader.readBool();
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -1113,14 +1103,10 @@ export namespace contract {
     }
     export class AgentStatus extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      maxThreads?: number;
-                      executingThreads?: number;
-                  }
-        ) {
+        constructor(data?: any[] | {
+            maxThreads?: number;
+            executingThreads?: number;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -1144,7 +1130,10 @@ export namespace contract {
         set executingThreads(value: number) {
             pb_1.Message.setField(this, 2, value);
         }
-        static fromObject(data: { maxThreads?: number; executingThreads?: number }): AgentStatus {
+        static fromObject(data: {
+            maxThreads?: number;
+            executingThreads?: number;
+        }): AgentStatus {
             const message = new AgentStatus({});
             if (data.maxThreads != null) {
                 message.maxThreads = data.maxThreads;
@@ -1171,15 +1160,18 @@ export namespace contract {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.maxThreads != 0) writer.writeInt64(1, this.maxThreads);
-            if (this.executingThreads != 0) writer.writeInt64(2, this.executingThreads);
-            if (!w) return writer.getResultBuffer();
+            if (this.maxThreads != 0)
+                writer.writeInt64(1, this.maxThreads);
+            if (this.executingThreads != 0)
+                writer.writeInt64(2, this.executingThreads);
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): AgentStatus {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new AgentStatus();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new AgentStatus();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
                         message.maxThreads = reader.readInt64();
@@ -1187,8 +1179,7 @@ export namespace contract {
                     case 2:
                         message.executingThreads = reader.readInt64();
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -1202,13 +1193,9 @@ export namespace contract {
     }
     export class GetAgentStatusResp extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      status?: AgentStatus;
-                  }
-        ) {
+        constructor(data?: any[] | {
+            status?: AgentStatus;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -1248,23 +1235,21 @@ export namespace contract {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.has_status) writer.writeMessage(1, this.status, () => this.status.serialize(writer));
-            if (!w) return writer.getResultBuffer();
+            if (this.has_status)
+                writer.writeMessage(1, this.status, () => this.status.serialize(writer));
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): GetAgentStatusResp {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new GetAgentStatusResp();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new GetAgentStatusResp();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
-                        reader.readMessage(
-                            message.status,
-                            () => (message.status = AgentStatus.deserialize(reader))
-                        );
+                        reader.readMessage(message.status, () => message.status = AgentStatus.deserialize(reader));
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -1278,16 +1263,12 @@ export namespace contract {
     }
     export class AgentData extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      id?: number;
-                      url?: string;
-                      ping?: number;
-                      status?: AgentStatus;
-                  }
-        ) {
+        constructor(data?: any[] | {
+            id?: number;
+            url?: string;
+            ping?: number;
+            status?: AgentStatus;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -1378,17 +1359,22 @@ export namespace contract {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.id != 0) writer.writeInt64(1, this.id);
-            if (this.url.length) writer.writeString(2, this.url);
-            if (this.ping != 0) writer.writeInt64(3, this.ping);
-            if (this.has_status) writer.writeMessage(4, this.status, () => this.status.serialize(writer));
-            if (!w) return writer.getResultBuffer();
+            if (this.id != 0)
+                writer.writeInt64(1, this.id);
+            if (this.url.length)
+                writer.writeString(2, this.url);
+            if (this.ping != 0)
+                writer.writeInt64(3, this.ping);
+            if (this.has_status)
+                writer.writeMessage(4, this.status, () => this.status.serialize(writer));
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): AgentData {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new AgentData();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new AgentData();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
                         message.id = reader.readInt64();
@@ -1400,13 +1386,9 @@ export namespace contract {
                         message.ping = reader.readInt64();
                         break;
                     case 4:
-                        reader.readMessage(
-                            message.status,
-                            () => (message.status = AgentStatus.deserialize(reader))
-                        );
+                        reader.readMessage(message.status, () => message.status = AgentStatus.deserialize(reader));
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
@@ -1420,13 +1402,9 @@ export namespace contract {
     }
     export class GetAgentsResp extends pb_1.Message {
         #one_of_decls: number[][] = [];
-        constructor(
-            data?:
-                | any[]
-                | {
-                      agents?: AgentData[];
-                  }
-        ) {
+        constructor(data?: any[] | {
+            agents?: AgentData[];
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [1], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
@@ -1446,7 +1424,7 @@ export namespace contract {
         }): GetAgentsResp {
             const message = new GetAgentsResp({});
             if (data.agents != null) {
-                message.agents = data.agents.map((item) => AgentData.fromObject(item));
+                message.agents = data.agents.map(item => AgentData.fromObject(item));
             }
             return message;
         }
@@ -1465,26 +1443,19 @@ export namespace contract {
             const writer = w || new pb_1.BinaryWriter();
             if (this.agents.length)
                 writer.writeRepeatedMessage(1, this.agents, (item: AgentData) => item.serialize(writer));
-            if (!w) return writer.getResultBuffer();
+            if (!w)
+                return writer.getResultBuffer();
         }
         static deserialize(bytes: Uint8Array | pb_1.BinaryReader): GetAgentsResp {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes),
-                message = new GetAgentsResp();
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new GetAgentsResp();
             while (reader.nextField()) {
-                if (reader.isEndGroup()) break;
+                if (reader.isEndGroup())
+                    break;
                 switch (reader.getFieldNumber()) {
                     case 1:
-                        reader.readMessage(message.agents, () =>
-                            pb_1.Message.addToRepeatedWrapperField(
-                                message,
-                                1,
-                                AgentData.deserialize(reader),
-                                AgentData
-                            )
-                        );
+                        reader.readMessage(message.agents, () => pb_1.Message.addToRepeatedWrapperField(message, 1, AgentData.deserialize(reader), AgentData));
                         break;
-                    default:
-                        reader.skipField();
+                    default: reader.skipField();
                 }
             }
             return message;
