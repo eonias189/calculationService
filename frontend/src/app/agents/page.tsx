@@ -10,7 +10,7 @@ const Agents: FC = () => {
     return (
         <>
             <h1 className="text-center font-normal text-2xl mt-4">Servers</h1>
-            <div className="flex flex-col gap-1 ml-2 items-center">
+            <div className="flex flex-col gap-1 mt-8 items-center">
                 {agentsFetcher.isLoading ? (
                     <Loader className="mx-auto mt-32" />
                 ) : (

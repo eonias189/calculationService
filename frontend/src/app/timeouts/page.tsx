@@ -30,7 +30,7 @@ const Timeouts: FC = () => {
     return (
         <>
             <h1 className="text-center font-normal text-2xl mt-4">Timeouts</h1>
-            <form className="flex flex-col gap-1 ml-2">
+            <form className="flex flex-col gap-1 m-2">
                 {timeoutsFetcher.isLoading ? (
                     <Loader className="mx-auto mt-32" />
                 ) : (

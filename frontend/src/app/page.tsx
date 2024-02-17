@@ -24,7 +24,7 @@ const Index: FC = () => {
                         }}
                     />
                     <Button
-                        className="w-3/12"
+                        className="w-32"
                         onClick={() => {
                             addTask(expression)
                                 .then(() => setExpression(""))

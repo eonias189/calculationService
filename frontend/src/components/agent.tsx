@@ -17,7 +17,7 @@ const Agent: FC<AgentProps> = ({ agent }) => {
                 })}`}
             ></span>
             <p>
-                ping: {agent.ping}; threads: {agent.status.executingThreads} of {agent.status.maxThreads}
+                ping: {agent.ping}ms; threads: {agent.status.executingThreads} of {agent.status.maxThreads}
             </p>
         </div>
     );

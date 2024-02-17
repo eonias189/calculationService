@@ -107,6 +107,7 @@ func (o *Orchestrator) updateAgentData(agent *c.AgentData) utils.Task {
 		finish := time.Now()
 		if err != nil {
 			newAgent.Ping = 999
+			newAgent.Status.ExecutingThreads = 0
 		} else {
 			pingDur := finish.Sub(start)
 			ping := min(pingDur.Milliseconds(), 999)

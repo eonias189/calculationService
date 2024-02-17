@@ -32,26 +32,36 @@ func (a *Agent) Calculate(task *c.Task, timeouts *c.Timeouts) {
 			a.api.SetResult(task.Id, 0, c.TaskStatus_executionError)
 		}
 	}()
+	var resutl int
+	var status c.TaskStatus
+	defer func() {
+		err := a.api.SetResult(task.Id, resutl, status)
+		for err != nil {
+			time.Sleep(time.Second * 5)
+			err = a.api.SetResult(task.Id, resutl, status)
+		}
+	}()
 	if err != nil {
-		a.api.SetResult(task.Id, 0, c.TaskStatus_executionError)
+		status = c.TaskStatus_executionError
 		return
 	}
 	res, err := evalExpr.Evaluate(nil)
 	if err != nil {
-		a.api.SetResult(task.Id, 0, c.TaskStatus_executionError)
+		status = c.TaskStatus_executionError
 		return
 	}
 	resString := fmt.Sprint(res)
 	resInt, err := strconv.Atoi(resString)
 	if err != nil {
-		a.api.SetResult(task.Id, 0, c.TaskStatus_executionError)
+		status = c.TaskStatus_executionError
 		return
 	}
 	time.Sleep(time.Second * time.Duration(plusesCount) * time.Duration(timeouts.Add))
 	time.Sleep(time.Second * time.Duration(minusesCount) * time.Duration(timeouts.Substract))
 	time.Sleep(time.Second * time.Duration(multpiplyCount) * time.Duration(timeouts.Multiply))
 	time.Sleep(time.Second * time.Duration(divideCount) * time.Duration(timeouts.Divide))
-	a.api.SetResult(task.Id, resInt, c.TaskStatus_done)
+	resutl = resInt
+	status = c.TaskStatus_done
 
 }
 
@@ -89,6 +99,7 @@ func (a *Agent) getTasks() {
 			a.Calculate(task, timeouts)
 			fmt.Println("calculated")
 		}))
+		time.Sleep(time.Second * 1)
 	}
 }
 
