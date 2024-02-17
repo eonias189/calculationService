@@ -105,7 +105,7 @@ func (s *Server) handleSetResult(w http.ResponseWriter, r *http.Request) {
 		utils.SendError(err, w)
 		return
 	}
-	err = s.orchestrator.SetResult(body.Id, int(body.Result))
+	err = s.orchestrator.SetResult(body.Id, int(body.Result), body.Status)
 	if err != nil {
 		utils.SendError(err, w)
 		return

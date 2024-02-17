@@ -26,7 +26,7 @@ func (s *Server) handleGetStatus(w http.ResponseWriter, r *http.Request) {
 		utils.SendError(err, w)
 		return
 	}
-	resp.Status = &status
+	resp.Status = status
 	utils.SendResponse(&resp, w)
 }
 

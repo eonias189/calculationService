@@ -59,6 +59,7 @@ message AddTaskResp {
 message SetResultBody {
     string id = 1;
     int64 result = 2;
+    TaskStatus status = 3;
 }
 
 message SetResultResp {

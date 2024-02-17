@@ -815,6 +815,7 @@ export namespace contract {
         constructor(data?: any[] | {
             id?: string;
             result?: number;
+            status?: TaskStatus;
         }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
@@ -824,6 +825,9 @@ export namespace contract {
                 }
                 if ("result" in data && data.result != undefined) {
                     this.result = data.result;
+                }
+                if ("status" in data && data.status != undefined) {
+                    this.status = data.status;
                 }
             }
         }
@@ -839,9 +843,16 @@ export namespace contract {
         set result(value: number) {
             pb_1.Message.setField(this, 2, value);
         }
+        get status() {
+            return pb_1.Message.getFieldWithDefault(this, 3, TaskStatus.pending) as TaskStatus;
+        }
+        set status(value: TaskStatus) {
+            pb_1.Message.setField(this, 3, value);
+        }
         static fromObject(data: {
             id?: string;
             result?: number;
+            status?: TaskStatus;
         }): SetResultBody {
             const message = new SetResultBody({});
             if (data.id != null) {
@@ -850,18 +861,25 @@ export namespace contract {
             if (data.result != null) {
                 message.result = data.result;
             }
+            if (data.status != null) {
+                message.status = data.status;
+            }
             return message;
         }
         toObject() {
             const data: {
                 id?: string;
                 result?: number;
+                status?: TaskStatus;
             } = {};
             if (this.id != null) {
                 data.id = this.id;
             }
             if (this.result != null) {
                 data.result = this.result;
+            }
+            if (this.status != null) {
+                data.status = this.status;
             }
             return data;
         }
@@ -873,6 +891,8 @@ export namespace contract {
                 writer.writeString(1, this.id);
             if (this.result != 0)
                 writer.writeInt64(2, this.result);
+            if (this.status != TaskStatus.pending)
+                writer.writeEnum(3, this.status);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -887,6 +907,9 @@ export namespace contract {
                         break;
                     case 2:
                         message.result = reader.readInt64();
+                        break;
+                    case 3:
+                        message.status = reader.readEnum();
                         break;
                     default: reader.skipField();
                 }

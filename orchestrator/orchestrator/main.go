@@ -11,13 +11,23 @@ type Orchestrator struct {
 	api *api.AgentApi
 }
 
+var (
+	tasksSend int
+)
+
 func (o *Orchestrator) AddTask(expression string) error {
 	fmt.Println("adding Task", expression)
 	return nil
 }
 func (o *Orchestrator) GetTask() (*c.Task, *c.Timeouts, error) {
+	defer func() {
+		tasksSend++
+	}()
 	fmt.Println("sending task")
-	return &c.Task{Id: "69", Expression: "1000 - 7"}, &c.Timeouts{Add: 4, Substract: 2, Multiply: 2, Divide: 88}, nil
+	if tasksSend > 4 {
+		return &c.Task{}, &c.Timeouts{}, fmt.Errorf("NoTasks")
+	}
+	return &c.Task{Id: "69", Expression: "1000 - 7"}, &c.Timeouts{Add: 10, Substract: 10, Multiply: 10, Divide: 88}, nil
 }
 func (o *Orchestrator) GetTasks() ([]*c.Task, error) {
 	fmt.Println("sending tasks")
@@ -39,8 +49,8 @@ func (o *Orchestrator) SetTimeouts(timeouts *c.Timeouts) error {
 	return nil
 }
 
-func (o *Orchestrator) SetResult(id string, res int) error {
-	fmt.Println("setting result", id, res)
+func (o *Orchestrator) SetResult(id string, res int, status c.TaskStatus) error {
+	fmt.Println("setting result", id, res, status)
 	return nil
 }
 func (o *Orchestrator) Register(url string) error {

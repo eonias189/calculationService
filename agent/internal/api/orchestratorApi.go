@@ -11,19 +11,19 @@ type OrchestratorApi struct {
 	Url string
 }
 
-func (oa *OrchestratorApi) GetTask() (c.Task, c.Timeouts, error) {
+func (oa *OrchestratorApi) GetTask() (*c.Task, *c.Timeouts, error) {
 	resp := c.GetTaskResp{}
 	body := utils.None{}
 	err := utils.DoRequest(oa.cli, oa.Url, "getTask", "GET", &body, &resp)
 	if err != nil {
-		return c.Task{}, c.Timeouts{}, err
+		return &c.Task{}, &c.Timeouts{}, err
 	}
-	return *resp.GetTask(), *resp.GetTimeouts(), err
+	return resp.GetTask(), resp.GetTimeouts(), err
 }
 
-func (oa *OrchestratorApi) SetResult(id string, result int) error {
+func (oa *OrchestratorApi) SetResult(id string, result int, status c.TaskStatus) error {
 	resp := c.SetResultResp{}
-	body := c.SetResultBody{Id: id, Result: int64(result)}
+	body := c.SetResultBody{Id: id, Result: int64(result), Status: status}
 	return utils.DoRequest(oa.cli, oa.Url, "setResult", "POST", &body, &resp)
 }
 
