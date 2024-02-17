@@ -35,6 +35,48 @@ func (db *DB) GetTasks() ([]*c.Task, error) {
 	return tasks, nil
 }
 
+func (db *DB) GetPendingTask() (*c.Task, error) {
+	task := &c.Task{}
+	query := fmt.Sprintf(`SELECT * FROM tasks WHERE status="%v" LIMIT 1`, c.TaskStatus_pending)
+	row, err := db.db.Query(query)
+	if err != nil {
+		return task, err
+	}
+	defer row.Close()
+	if !row.Next() {
+		return task, fmt.Errorf("NoTasks")
+	}
+	var status string
+	err = row.Scan(&task.Id, &task.Expression, &task.Result, &task.AgentId, &status)
+	if err != nil {
+		return task, err
+	}
+	task.Status = c.TaskStatus(c.TaskStatus_value[status])
+	return task, nil
+}
+
+func (db *DB) GetTasksOfAgent(id int64) ([]*c.Task, error) {
+	tasks := []*c.Task{}
+	query := fmt.Sprintf(`SELECT * FROM tasks WHERE agentId=%v`, id)
+	rows, err := db.db.Query(query)
+	if err != nil {
+		return tasks, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		task := c.Task{}
+		var status string
+		err = rows.Scan(&task.Id, &task.Expression, &task.Result, &task.AgentId, &status)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		task.Status = c.TaskStatus(c.TaskStatus_value[status])
+		tasks = append(tasks, &task)
+	}
+	return tasks, nil
+}
+
 func (db *DB) GetTask(id string) (*c.Task, error) {
 	task := &c.Task{}
 	query := fmt.Sprintf(`SELECT * FROM tasks WHERE id="%v"`, id)

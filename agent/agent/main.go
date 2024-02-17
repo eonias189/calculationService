@@ -8,6 +8,7 @@ import (
 	"time"
 
 	c "backend/contract"
+	"backend/utils"
 
 	"github.com/Knetic/govaluate"
 )
@@ -15,19 +16,8 @@ import (
 type Agent struct {
 	api     *api.OrchestratorApi
 	threads int
-	wp      *WorkerPool
-}
-
-type calculateTask struct {
-	f func()
-}
-
-func (ct *calculateTask) Do() {
-	ct.f()
-}
-
-func newTask(f func()) *calculateTask {
-	return &calculateTask{f: f}
+	id      int
+	wp      *utils.WorkerPool
 }
 
 func (a *Agent) Calculate(task *c.Task, timeouts *c.Timeouts) {
@@ -63,11 +53,14 @@ func (a *Agent) GetAgentStatus() (*c.AgentStatus, error) {
 
 func (a *Agent) register(url string) {
 	var err error
-	err = a.api.Register(url)
+	id, err := a.api.Register(url)
 	for err != nil {
+		fmt.Println(err)
 		time.Sleep(time.Second * 5)
-		err = a.api.Register(url)
+		id, err = a.api.Register(url)
 	}
+	a.id = id
+
 }
 
 func (a *Agent) getTasks() {
@@ -76,13 +69,13 @@ func (a *Agent) getTasks() {
 			time.Sleep(time.Second * 5)
 			continue
 		}
-		task, timeouts, err := a.api.GetTask()
+		task, timeouts, err := a.api.GetTask(a.id)
 		if err != nil {
 			fmt.Println(err)
 			time.Sleep(time.Second * 5)
 			continue
 		}
-		a.wp.AddTask(newTask(func() {
+		a.wp.AddTask(utils.NewTask(func() {
 			fmt.Println("start calculating")
 			a.Calculate(task, timeouts)
 			fmt.Println("calculated")
@@ -93,10 +86,10 @@ func (a *Agent) getTasks() {
 func (a *Agent) Run(url string) {
 	fmt.Println("starting at", url, "with", a.threads, "threads")
 	a.wp.Start()
-	go a.register(url)
+	a.register(url)
 	go a.getTasks()
 }
 
 func New(api *api.OrchestratorApi, threads int) *Agent {
-	return &Agent{api: api, threads: threads, wp: NewWorkerPool(threads)}
+	return &Agent{api: api, threads: threads, wp: utils.NewWorkerPool(threads)}
 }

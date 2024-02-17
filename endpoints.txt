@@ -3,7 +3,7 @@ endpoints:
         /status/    get
     orchestrator:
         /addTask        post
-        /getTask/        get
+        /getTask/        post
         /getTasks/       get
         /getAgents/      get
         /getTimeouts/    get

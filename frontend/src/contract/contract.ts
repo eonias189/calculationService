@@ -306,6 +306,73 @@ export namespace contract {
             return Task.deserialize(bytes);
         }
     }
+    export class GetTaskBody extends pb_1.Message {
+        #one_of_decls: number[][] = [];
+        constructor(data?: any[] | {
+            agentId?: number;
+        }) {
+            super();
+            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
+            if (!Array.isArray(data) && typeof data == "object") {
+                if ("agentId" in data && data.agentId != undefined) {
+                    this.agentId = data.agentId;
+                }
+            }
+        }
+        get agentId() {
+            return pb_1.Message.getFieldWithDefault(this, 1, 0) as number;
+        }
+        set agentId(value: number) {
+            pb_1.Message.setField(this, 1, value);
+        }
+        static fromObject(data: {
+            agentId?: number;
+        }): GetTaskBody {
+            const message = new GetTaskBody({});
+            if (data.agentId != null) {
+                message.agentId = data.agentId;
+            }
+            return message;
+        }
+        toObject() {
+            const data: {
+                agentId?: number;
+            } = {};
+            if (this.agentId != null) {
+                data.agentId = this.agentId;
+            }
+            return data;
+        }
+        serialize(): Uint8Array;
+        serialize(w: pb_1.BinaryWriter): void;
+        serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
+            const writer = w || new pb_1.BinaryWriter();
+            if (this.agentId != 0)
+                writer.writeInt64(1, this.agentId);
+            if (!w)
+                return writer.getResultBuffer();
+        }
+        static deserialize(bytes: Uint8Array | pb_1.BinaryReader): GetTaskBody {
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new GetTaskBody();
+            while (reader.nextField()) {
+                if (reader.isEndGroup())
+                    break;
+                switch (reader.getFieldNumber()) {
+                    case 1:
+                        message.agentId = reader.readInt64();
+                        break;
+                    default: reader.skipField();
+                }
+            }
+            return message;
+        }
+        serializeBinary(): Uint8Array {
+            return this.serialize();
+        }
+        static deserializeBinary(bytes: Uint8Array): GetTaskBody {
+            return GetTaskBody.deserialize(bytes);
+        }
+    }
     export class GetTaskResp extends pb_1.Message {
         #one_of_decls: number[][] = [];
         constructor(data?: any[] | {
@@ -1060,37 +1127,37 @@ export namespace contract {
     export class RegisterResp extends pb_1.Message {
         #one_of_decls: number[][] = [];
         constructor(data?: any[] | {
-            ok?: boolean;
+            id?: number;
         }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
-                if ("ok" in data && data.ok != undefined) {
-                    this.ok = data.ok;
+                if ("id" in data && data.id != undefined) {
+                    this.id = data.id;
                 }
             }
         }
-        get ok() {
-            return pb_1.Message.getFieldWithDefault(this, 1, false) as boolean;
+        get id() {
+            return pb_1.Message.getFieldWithDefault(this, 1, 0) as number;
         }
-        set ok(value: boolean) {
+        set id(value: number) {
             pb_1.Message.setField(this, 1, value);
         }
         static fromObject(data: {
-            ok?: boolean;
+            id?: number;
         }): RegisterResp {
             const message = new RegisterResp({});
-            if (data.ok != null) {
-                message.ok = data.ok;
+            if (data.id != null) {
+                message.id = data.id;
             }
             return message;
         }
         toObject() {
             const data: {
-                ok?: boolean;
+                id?: number;
             } = {};
-            if (this.ok != null) {
-                data.ok = this.ok;
+            if (this.id != null) {
+                data.id = this.id;
             }
             return data;
         }
@@ -1098,8 +1165,8 @@ export namespace contract {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.ok != false)
-                writer.writeBool(1, this.ok);
+            if (this.id != 0)
+                writer.writeInt64(1, this.id);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -1110,7 +1177,7 @@ export namespace contract {
                     break;
                 switch (reader.getFieldNumber()) {
                     case 1:
-                        message.ok = reader.readBool();
+                        message.id = reader.readInt64();
                         break;
                     default: reader.skipField();
                 }

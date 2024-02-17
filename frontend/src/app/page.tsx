@@ -13,7 +13,7 @@ const Index: FC = () => {
             <p>tasks</p>
             {tasks?.map((task) => (
                 <p key={task.id} className="">
-                    {task.expression}
+                    {task.expression} {task.result} {task.status}
                 </p>
             ))}
             <button onClick={() => addTask("2 + 2 * 2")} className="bg-teal-500 rounded p-1">

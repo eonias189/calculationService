@@ -26,6 +26,10 @@ message Task {
     TaskStatus status = 5;
 }
 
+message GetTaskBody {
+    int64 agentId = 1;
+}
+
 message GetTaskResp {
     Task task = 1;
     Timeouts timeouts = 2;
@@ -72,7 +76,7 @@ message RegisterBody {
 }
 
 message RegisterResp {
-    bool ok = 1;
+    int64 id = 1;
 }
 
 message AgentStatus {

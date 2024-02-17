@@ -11,10 +11,10 @@ type OrchestratorApi struct {
 	Url string
 }
 
-func (oa *OrchestratorApi) GetTask() (*c.Task, *c.Timeouts, error) {
+func (oa *OrchestratorApi) GetTask(id int) (*c.Task, *c.Timeouts, error) {
 	resp := c.GetTaskResp{}
-	body := utils.None{}
-	err := utils.DoRequest(oa.cli, oa.Url, "getTask", "GET", &body, &resp)
+	body := c.GetTaskBody{AgentId: int64(id)}
+	err := utils.DoRequest(oa.cli, oa.Url, "getTask", "POST", &body, &resp)
 	if err != nil {
 		return &c.Task{}, &c.Timeouts{}, err
 	}
@@ -27,10 +27,14 @@ func (oa *OrchestratorApi) SetResult(id string, result int, status c.TaskStatus)
 	return utils.DoRequest(oa.cli, oa.Url, "setResult", "POST", &body, &resp)
 }
 
-func (os *OrchestratorApi) Register(url string) error {
+func (os *OrchestratorApi) Register(url string) (int, error) {
 	resp := c.RegisterResp{}
 	body := c.RegisterBody{Url: url}
-	return utils.DoRequest(os.cli, os.Url, "register", "POST", &body, &resp)
+	err := utils.DoRequest(os.cli, os.Url, "register", "POST", &body, &resp)
+	if err != nil {
+		return 0, err
+	}
+	return int(resp.Id), nil
 }
 
 func NewOrchestratorApi(url string) *OrchestratorApi {

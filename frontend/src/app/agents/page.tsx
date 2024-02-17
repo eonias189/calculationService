@@ -13,7 +13,7 @@ const Agents: FC = () => {
             <p>agents</p>
             {agents?.map((agent) => (
                 <p key={agent.id}>
-                    {agent.ping}, {agent.status.executingThreads}
+                    {agent.ping}, {agent.status.executingThreads}, {agent.status.maxThreads}
                 </p>
             ))}
         </>

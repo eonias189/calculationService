@@ -1,4 +1,4 @@
-package agent
+package utils
 
 import "sync"
 
@@ -45,4 +45,16 @@ func (wp *WorkerPool) AddTask(t Task) {
 
 func NewWorkerPool(maxWorkers int) *WorkerPool {
 	return &WorkerPool{MaxWorkers: maxWorkers, wg: sync.WaitGroup{}, tasks: make(chan Task), exit: make(chan struct{})}
+}
+
+type simpleTask struct {
+	f func()
+}
+
+func (st *simpleTask) Do() {
+	st.f()
+}
+
+func NewTask(f func()) Task {
+	return &simpleTask{f: f}
 }

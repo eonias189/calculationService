@@ -32,8 +32,11 @@ func (s *Server) handleAddTask(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleGetTask(w http.ResponseWriter, r *http.Request) {
 	resp := c.GetTaskResp{}
-
-	task, timeouts, err := s.orchestrator.GetTask()
+	body, err := utils.GetBody[c.GetTaskBody](r)
+	if err != nil {
+		utils.SendError(err, w)
+	}
+	task, timeouts, err := s.orchestrator.GetTask(int(body.AgentId))
 	if err != nil {
 		utils.SendError(err, w)
 		return
@@ -114,18 +117,19 @@ func (s *Server) handleSetResult(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
-	resp := c.RegisterResp{Ok: true}
+	resp := c.RegisterResp{}
 
 	body, err := utils.GetBody[c.RegisterBody](r)
 	if err != nil {
 		utils.SendError(err, w)
 		return
 	}
-	err = s.orchestrator.Register(body.Url)
+	id, err := s.orchestrator.Register(body.Url)
 	if err != nil {
 		utils.SendError(err, w)
 		return
 	}
+	resp.Id = int64(id)
 	utils.SendResponse(&resp, w)
 }
 
@@ -152,7 +156,7 @@ func (s *Server) Run() {
 	s.orchestrator.Run("http://127.0.0.1" + s.Port)
 
 	s.Handle("/addTask", "post", s.handleAddTask)
-	s.Handle("/getTask", "get", s.handleGetTask)
+	s.Handle("/getTask", "post", s.handleGetTask)
 	s.Handle("/getTasks", "get", s.handleGetTasks)
 	s.Handle("/getAgents", "get", s.handleGetAgents)
 	s.Handle("/getTimeouts", "get", s.handleGetTimeouts)

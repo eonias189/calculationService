@@ -32,6 +32,21 @@ func (db *DB) GetAgents() ([]*c.AgentData, error) {
 	return agents, nil
 }
 
+func (db *DB) GetAgentByUrl(url string) (*c.AgentData, error) {
+	agent := &c.AgentData{Status: &c.AgentStatus{}}
+	query := fmt.Sprintf(`SELECT * FROM agents WHERE url="%v"`, url)
+	row, err := db.db.Query(query)
+	if err != nil {
+		return agent, err
+	}
+	defer row.Close()
+	if !row.Next() {
+		return agent, fmt.Errorf("AgentNotFound")
+	}
+	err = row.Scan(&agent.Id, &agent.Ping, &agent.Status.MaxThreads, &agent.Status.ExecutingThreads, &agent.Url)
+	return agent, err
+}
+
 func (db *DB) GetAgent(id int) (*c.AgentData, error) {
 	agent := &c.AgentData{Status: &c.AgentStatus{}}
 	query := fmt.Sprintf(`SELECT * FROM agents WHERE id=%v`, id)
