@@ -40,7 +40,6 @@ func (o *Orchestrator) AddTask(expression string) error {
 	return o.db.AddTask(newId, expression)
 }
 func (o *Orchestrator) GetTask(agentId int) (*c.Task, *c.Timeouts, error) {
-	fmt.Println("sending task to", agentId)
 	task, err := o.db.GetPendingTask()
 	if err != nil {
 		return &c.Task{}, &c.Timeouts{}, err
@@ -50,6 +49,7 @@ func (o *Orchestrator) GetTask(agentId int) (*c.Task, *c.Timeouts, error) {
 	if err != nil {
 		return &c.Task{}, &c.Timeouts{}, err
 	}
+	fmt.Println("sending task", task.Expression, "to", agentId)
 	return task, o.timeouts, nil
 }
 func (o *Orchestrator) GetTasks() ([]*c.Task, error) {
@@ -114,7 +114,7 @@ func (o *Orchestrator) updateAgentData(agent *c.AgentData) utils.Task {
 			newAgent.Status.ExecutingThreads = status.ExecutingThreads
 			newAgent.Status.MaxThreads = status.MaxThreads
 		}
-		fmt.Println("updating", newAgent.Id, "to", newAgent.Ping, newAgent.Status.ExecutingThreads, newAgent.Status.MaxThreads)
+		// fmt.Println("updating", newAgent.Id, "to", newAgent.Ping, newAgent.Status.ExecutingThreads, newAgent.Status.MaxThreads)
 		o.db.UpdateAgent(int(agent.Id), newAgent)
 	})
 }
@@ -151,7 +151,7 @@ func (o *Orchestrator) searchDeadAgents() {
 				continue
 			}
 			if agent.Ping == int64(999) {
-				fmt.Println("found dead agent", agent.Id)
+				// fmt.Println("found dead agent", agent.Id)
 				tasks, err := o.db.GetTasksOfAgent(agent.Id)
 				if err != nil {
 					continue
