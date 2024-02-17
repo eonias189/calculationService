@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export type Fetcher<T> = {
     isLoading: boolean;
@@ -10,14 +10,20 @@ export type Fetcher<T> = {
 export const useFetcher = <T>(fetch: () => Promise<T>): Fetcher<T> => {
     const [data, setData] = useState<T>();
     const [isLoading, setIsLoading] = useState(false);
-    return {
+    const fetcher = {
         isLoading,
         data,
         update: () => {
             setIsLoading(true);
             fetch()
                 .then(setData)
-                .then(() => setIsLoading(false));
+                .then(() => {
+                    setTimeout(() => setIsLoading(false), 500);
+                });
         },
     };
+    useEffect(() => {
+        fetcher.update();
+    }, []);
+    return fetcher;
 };

@@ -3,14 +3,12 @@ import { addTask, fetchTasks } from "@/api";
 import Task from "@/components/task";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
-import { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
 import { useFetcher } from "@/hooks/useFetcher";
+import Loader from "@/components/loader";
 
 const Index: FC = () => {
     const tasksFetcher = useFetcher(fetchTasks);
-    useEffect(() => {
-        tasksFetcher.update();
-    }, []);
     const [expression, setExpression] = useState("");
     return (
         <>
@@ -41,10 +39,11 @@ const Index: FC = () => {
                         Add
                     </Button>
                 </div>
-
-                {tasksFetcher.data?.map((task) => (
-                    <Task key={task.id} task={task} />
-                ))}
+                {tasksFetcher.isLoading ? (
+                    <Loader className="mx-auto mt-20" />
+                ) : (
+                    tasksFetcher.data?.map((task) => <Task key={task.id} task={task} />)
+                )}
             </div>
         </>
     );
