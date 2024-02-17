@@ -45,7 +45,7 @@ func DoRequest[B, R any](cli *http.Client, url, endpoint, method string, body *B
 	if err != nil {
 		return err
 	}
-	fmt.Println(path)
+	// fmt.Println(path)
 
 	defer resp.Body.Close()
 	respBytes, err := io.ReadAll(resp.Body)

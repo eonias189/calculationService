@@ -26,17 +26,26 @@ func (a *Agent) Calculate(task *c.Task, timeouts *c.Timeouts) {
 	multpiplyCount := strings.Count(task.Expression, "*")
 	divideCount := strings.Count(task.Expression, "/")
 	evalExpr, err := govaluate.NewEvaluableExpression(task.Expression)
+	defer func() {
+		err := recover()
+		if err != nil {
+			a.api.SetResult(task.Id, 0, c.TaskStatus_executionError)
+		}
+	}()
 	if err != nil {
 		a.api.SetResult(task.Id, 0, c.TaskStatus_executionError)
+		return
 	}
 	res, err := evalExpr.Evaluate(nil)
 	if err != nil {
 		a.api.SetResult(task.Id, 0, c.TaskStatus_executionError)
+		return
 	}
 	resString := fmt.Sprint(res)
 	resInt, err := strconv.Atoi(resString)
 	if err != nil {
 		a.api.SetResult(task.Id, 0, c.TaskStatus_executionError)
+		return
 	}
 	time.Sleep(time.Second * time.Duration(plusesCount) * time.Duration(timeouts.Add))
 	time.Sleep(time.Second * time.Duration(minusesCount) * time.Duration(timeouts.Substract))
