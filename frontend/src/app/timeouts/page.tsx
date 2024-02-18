@@ -18,6 +18,12 @@ const entries = <T extends Object>(obj: T): [keyof T, T[keyof T]][] => {
 const Timeouts: FC = () => {
     const timeoutsFetcher = useFetcher(fetchTimeouts);
     const [timeouts, setTimeouts] = useState(new contract.Timeouts().toObject());
+    const names: Record<keyof typeof timeouts, string> = {
+        add: "+",
+        substract: "-",
+        multiply: "*",
+        divide: "/",
+    };
     useEffect(() => {
         setTimeouts({
             ...timeouts,
@@ -37,7 +43,7 @@ const Timeouts: FC = () => {
                     <>
                         {entries(timeouts).map(([key, value], num) => (
                             <div key={num} className="flex flex-row items-center gap-2">
-                                <label>{key}</label>
+                                <label>{names[key]}</label>
                                 <Input
                                     type="range"
                                     max={100}
