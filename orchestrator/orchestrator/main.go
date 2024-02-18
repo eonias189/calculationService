@@ -99,11 +99,31 @@ func (o *Orchestrator) Register(url string) (int, error) {
 	return int(agent.Id), err
 }
 
+type getStatusTask struct {
+	resp *c.AgentStatus
+	err  error
+}
+
 func (o *Orchestrator) updateAgentData(agent *c.AgentData) utils.Task {
 	return utils.NewTask(func() {
 		newAgent := &c.AgentData{Id: agent.Id, Url: agent.Url, Ping: agent.Ping, Status: agent.Status}
 		start := time.Now()
-		status, err := o.api.GetStatus(agent.Url)
+		resChan := make(chan getStatusTask)
+		resp := &c.AgentStatus{}
+		var err error
+		go func() {
+			status, err := o.api.GetStatus(agent.Url)
+			resChan <- getStatusTask{resp: status, err: err}
+		}()
+		select {
+		case res := <-resChan:
+			resp = res.resp
+			err = res.err
+		case <-time.After(time.Second):
+			err = fmt.Errorf("Timeout")
+			resp.ExecutingThreads = 0
+			resp.MaxThreads = 0
+		}
 		finish := time.Now()
 		if err != nil {
 			newAgent.Ping = 999
@@ -112,8 +132,8 @@ func (o *Orchestrator) updateAgentData(agent *c.AgentData) utils.Task {
 			pingDur := finish.Sub(start)
 			ping := min(pingDur.Milliseconds(), 999)
 			newAgent.Ping = ping
-			newAgent.Status.ExecutingThreads = status.ExecutingThreads
-			newAgent.Status.MaxThreads = status.MaxThreads
+			newAgent.Status.ExecutingThreads = resp.ExecutingThreads
+			newAgent.Status.MaxThreads = resp.MaxThreads
 		}
 		// fmt.Println("updating", newAgent.Id, "to", newAgent.Ping, newAgent.Status.ExecutingThreads, newAgent.Status.MaxThreads)
 		o.db.UpdateAgent(int(agent.Id), newAgent)

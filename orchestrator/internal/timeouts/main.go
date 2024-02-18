@@ -12,7 +12,7 @@ const (
 )
 
 func GetTimeouts() (*c.Timeouts, error) {
-	timeouts := c.Timeouts{Add: 1, Substract: 1, Divide: 1, Multiply: 1}
+	timeouts := c.Timeouts{Add: 0, Substract: 0, Divide: 0, Multiply: 0}
 	file, err := os.Open(Path)
 	if err != nil {
 		return &timeouts, err
@@ -28,7 +28,7 @@ func GetTimeouts() (*c.Timeouts, error) {
 }
 
 func SetTimeouts(timeouts *c.Timeouts) error {
-	file, err := os.OpenFile(Path, os.O_CREATE|os.O_RDWR, 0644)
+	file, err := os.OpenFile(Path, os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
