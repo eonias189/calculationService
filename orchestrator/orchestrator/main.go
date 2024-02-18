@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"orchestrator/internal/api"
 	"orchestrator/internal/db"
+	"orchestrator/internal/timeouts"
 	"time"
 
 	c "backend/contract"
@@ -13,9 +14,8 @@ import (
 )
 
 type Orchestrator struct {
-	api      *api.AgentApi
-	db       *db.DB
-	timeouts *c.Timeouts
+	api *api.AgentApi
+	db  *db.DB
 }
 
 func NewTaskId() string {
@@ -50,7 +50,8 @@ func (o *Orchestrator) GetTask(agentId int) (*c.Task, *c.Timeouts, error) {
 		return &c.Task{}, &c.Timeouts{}, err
 	}
 	fmt.Println("sending task", task.Expression, "to", agentId)
-	return task, o.timeouts, nil
+	tmts, _ := timeouts.GetTimeouts()
+	return task, tmts, nil
 }
 func (o *Orchestrator) GetTasks() ([]*c.Task, error) {
 	fmt.Println("sending tasks")
@@ -71,13 +72,12 @@ func (o *Orchestrator) GetAgents() ([]*c.AgentData, error) {
 	return res, nil
 }
 func (o *Orchestrator) GetTimeouts() (*c.Timeouts, error) {
-	fmt.Println("sending timeouts")
-	return o.timeouts, nil
+	tmts, _ := timeouts.GetTimeouts()
+	return tmts, nil
 }
-func (o *Orchestrator) SetTimeouts(timeouts *c.Timeouts) error {
-	fmt.Println("setting timeouts", timeouts.Add, timeouts.Substract, timeouts.Multiply, timeouts.Divide)
-	o.timeouts = timeouts
-	return nil
+func (o *Orchestrator) SetTimeouts(tmts *c.Timeouts) error {
+	fmt.Println("setting timeouts", tmts.Add, tmts.Substract, tmts.Multiply, tmts.Divide)
+	return timeouts.SetTimeouts(tmts)
 }
 
 func (o *Orchestrator) SetResult(id string, res int, status c.TaskStatus) error {
@@ -175,5 +175,5 @@ func (o *Orchestrator) Run(url string) {
 }
 
 func NewOrchestrator(api *api.AgentApi, db *db.DB) *Orchestrator {
-	return &Orchestrator{api: api, db: db, timeouts: &c.Timeouts{Add: 1, Substract: 1, Multiply: 1, Divide: 1}}
+	return &Orchestrator{api: api, db: db}
 }
