@@ -127,7 +127,6 @@ func (o *Orchestrator) updateAgentData(agent *c.AgentData) utils.Task {
 		finish := time.Now()
 		if err != nil {
 			newAgent.Ping = 999
-			newAgent.Status.ExecutingThreads = 0
 		} else {
 			pingDur := finish.Sub(start)
 			ping := min(pingDur.Milliseconds(), 999)
@@ -178,10 +177,11 @@ func (o *Orchestrator) searchDeadAgents() {
 					continue
 				}
 				for _, task := range tasks {
-					task.Status = c.TaskStatus_pending
-					task.AgentId = -1
-					o.db.UpdateTask(task.Id, task)
+					o.db.DeleteTask(task.Id)
+					o.db.AddTask(task.Id, task.Expression)
 				}
+				agent.Status.ExecutingThreads = 0
+				o.db.UpdateAgent(int(agent.Id), agent)
 			}
 		}
 		time.Sleep(time.Second * 10)
