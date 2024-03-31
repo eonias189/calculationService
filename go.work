@@ -1,7 +1,7 @@
-go 1.21.0
+go 1.22.1
 
 use (
-	./agent
-	./backend
-	./orchestrator
+    ./agent
+    ./gen/go
+    ./orchestrator
 )

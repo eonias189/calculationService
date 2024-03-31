@@ -1,9 +1,8 @@
-module github.com/eonias189/calculationService/agent
+module github.com/eonias189/calculationService/gen/go
 
-go 1.21.0
+go 1.22.1
 
 require (
-	github.com/Knetic/govaluate v3.0.0+incompatible // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect

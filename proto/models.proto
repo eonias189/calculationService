@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package github.com.eonias189.calculationService.proto;
+option go_package = "/pb";
+
+message Task {
+    int64 id = 1;
+    string expression = 2;
+    Timeouts timeouts = 3;
+}
+
+message Timeouts {
+    int64 add = 1;
+    int64 sub = 2;
+    int64 mul = 3;
+    int64 div = 4;
+}

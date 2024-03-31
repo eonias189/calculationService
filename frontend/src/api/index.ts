@@ -2,8 +2,6 @@
 import axios from "axios";
 import { contract } from "./.././contract";
 
-const URL = "http://localhost:8081/";
-
 export const fetchTasks = async (): Promise<contract.Task[]> => {
   const resp = await axios.get(URL + "getTasks");
   return contract.GetTasksResp.fromObject(resp.data).tasks.reverse();

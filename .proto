@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package contract;
 
-option go_package = "/contract";
+option go_package = "github.com/eonias189/calculationService/agent/internal/proto";
 
 enum TaskStatus {
     pending = 0;

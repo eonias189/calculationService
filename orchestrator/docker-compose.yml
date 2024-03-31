@@ -1,0 +1,59 @@
+version: "3"
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=db
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ../pgdata:/var/lib/postgresql/data/pgdata
+    ports:
+      - 5432:5432
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=secret
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
+    ports:
+      - 5050:80
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      - GRPC_ADDRESS=0.0.0.0:8080
+      - REST_API_ADDRESS=0.0.0.0:8081
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    restart: always
+    ports:
+      - 8080:8080
+      - 8081:8081
+
+  agent_1:
+    image: agent
+    environment:
+      - ORCHESTRATOR_ADDRESS=orchestrator:8080
+      - MAX_THREADS=10
+    depends_on:
+      - orchestrator
+
+volumes:
+  pgadmin_data:

@@ -1,2 +1,4 @@
-**/db.db
-**/timeouts.json
+**/go.sum
+go.work
+go.work.sum
+pgdata
