@@ -5,26 +5,18 @@ package github.com.eonias189.calculationService.proto;
 option go_package = "/pb";
 
 service Orchestrator {
-    rpc Connect (ConnReq) returns (stream Task);
-    rpc SetResult(ResultResp) returns (OkResp);
-    rpc Pong(PongReq) returns (OkResp);
-}
+    rpc Connect (stream ResultResp) returns (stream Task);
 
-message ConnReq {
-    int64 maxThreads = 1;
 }
 
 message ResultResp {
     int64 taskId = 2;
     double result = 3;
     bool error = 4;
+    int64 sendTime = 5;
+
 }
 
 message OkResp {
     bool ok = 1;
-}
-
-message PongReq {
-    int64 workingThreads = 1;
-    int64 sendTime = 2;
 }

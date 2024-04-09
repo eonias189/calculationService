@@ -9,19 +9,13 @@ type Task interface {
 	Do()
 }
 
-type WorkerPool interface {
-	Start(context.Context)
-	AddTask(Task)
-	Close()
-}
-
-type workerPoolImpl struct {
+type WorkerPool struct {
 	MaxWorkers int
 	tasks      chan Task
 	wg         sync.WaitGroup
 }
 
-func (wp *workerPoolImpl) Start(ctx context.Context) {
+func (wp *WorkerPool) Start(ctx context.Context) {
 	for i := 0; i < wp.MaxWorkers; i++ {
 		wp.wg.Add(1)
 
@@ -41,16 +35,16 @@ func (wp *workerPoolImpl) Start(ctx context.Context) {
 	}
 }
 
-func (wp *workerPoolImpl) AddTask(t Task) {
+func (wp *WorkerPool) AddTask(t Task) {
 	wp.tasks <- t
 }
 
-func (wp *workerPoolImpl) Close() {
+func (wp *WorkerPool) Close() {
 	wp.wg.Wait()
 }
 
-func NewWorkerPool(maxWorkers int) WorkerPool {
-	return &workerPoolImpl{MaxWorkers: maxWorkers, wg: sync.WaitGroup{}, tasks: make(chan Task)}
+func NewWorkerPool(maxWorkers int) *WorkerPool {
+	return &WorkerPool{MaxWorkers: maxWorkers, wg: sync.WaitGroup{}, tasks: make(chan Task)}
 }
 
 type simpleTask struct {

@@ -22,9 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OrchestratorClient interface {
-	Connect(ctx context.Context, in *ConnReq, opts ...grpc.CallOption) (Orchestrator_ConnectClient, error)
-	SetResult(ctx context.Context, in *ResultResp, opts ...grpc.CallOption) (*OkResp, error)
-	Pong(ctx context.Context, in *PongReq, opts ...grpc.CallOption) (*OkResp, error)
+	Connect(ctx context.Context, opts ...grpc.CallOption) (Orchestrator_ConnectClient, error)
 }
 
 type orchestratorClient struct {
@@ -35,28 +33,27 @@ func NewOrchestratorClient(cc grpc.ClientConnInterface) OrchestratorClient {
 	return &orchestratorClient{cc}
 }
 
-func (c *orchestratorClient) Connect(ctx context.Context, in *ConnReq, opts ...grpc.CallOption) (Orchestrator_ConnectClient, error) {
+func (c *orchestratorClient) Connect(ctx context.Context, opts ...grpc.CallOption) (Orchestrator_ConnectClient, error) {
 	stream, err := c.cc.NewStream(ctx, &Orchestrator_ServiceDesc.Streams[0], "/github.com.eonias189.calculationService.proto.Orchestrator/Connect", opts...)
 	if err != nil {
 		return nil, err
 	}
 	x := &orchestratorConnectClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
 	return x, nil
 }
 
 type Orchestrator_ConnectClient interface {
+	Send(*ResultResp) error
 	Recv() (*Task, error)
 	grpc.ClientStream
 }
 
 type orchestratorConnectClient struct {
 	grpc.ClientStream
+}
+
+func (x *orchestratorConnectClient) Send(m *ResultResp) error {
+	return x.ClientStream.SendMsg(m)
 }
 
 func (x *orchestratorConnectClient) Recv() (*Task, error) {
@@ -67,31 +64,11 @@ func (x *orchestratorConnectClient) Recv() (*Task, error) {
 	return m, nil
 }
 
-func (c *orchestratorClient) SetResult(ctx context.Context, in *ResultResp, opts ...grpc.CallOption) (*OkResp, error) {
-	out := new(OkResp)
-	err := c.cc.Invoke(ctx, "/github.com.eonias189.calculationService.proto.Orchestrator/SetResult", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *orchestratorClient) Pong(ctx context.Context, in *PongReq, opts ...grpc.CallOption) (*OkResp, error) {
-	out := new(OkResp)
-	err := c.cc.Invoke(ctx, "/github.com.eonias189.calculationService.proto.Orchestrator/Pong", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // OrchestratorServer is the server API for Orchestrator service.
 // All implementations must embed UnimplementedOrchestratorServer
 // for forward compatibility
 type OrchestratorServer interface {
-	Connect(*ConnReq, Orchestrator_ConnectServer) error
-	SetResult(context.Context, *ResultResp) (*OkResp, error)
-	Pong(context.Context, *PongReq) (*OkResp, error)
+	Connect(Orchestrator_ConnectServer) error
 	mustEmbedUnimplementedOrchestratorServer()
 }
 
@@ -99,14 +76,8 @@ type OrchestratorServer interface {
 type UnimplementedOrchestratorServer struct {
 }
 
-func (UnimplementedOrchestratorServer) Connect(*ConnReq, Orchestrator_ConnectServer) error {
+func (UnimplementedOrchestratorServer) Connect(Orchestrator_ConnectServer) error {
 	return status.Errorf(codes.Unimplemented, "method Connect not implemented")
-}
-func (UnimplementedOrchestratorServer) SetResult(context.Context, *ResultResp) (*OkResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetResult not implemented")
-}
-func (UnimplementedOrchestratorServer) Pong(context.Context, *PongReq) (*OkResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Pong not implemented")
 }
 func (UnimplementedOrchestratorServer) mustEmbedUnimplementedOrchestratorServer() {}
 
@@ -122,15 +93,12 @@ func RegisterOrchestratorServer(s grpc.ServiceRegistrar, srv OrchestratorServer)
 }
 
 func _Orchestrator_Connect_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(ConnReq)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(OrchestratorServer).Connect(m, &orchestratorConnectServer{stream})
+	return srv.(OrchestratorServer).Connect(&orchestratorConnectServer{stream})
 }
 
 type Orchestrator_ConnectServer interface {
 	Send(*Task) error
+	Recv() (*ResultResp, error)
 	grpc.ServerStream
 }
 
@@ -142,40 +110,12 @@ func (x *orchestratorConnectServer) Send(m *Task) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _Orchestrator_SetResult_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ResultResp)
-	if err := dec(in); err != nil {
+func (x *orchestratorConnectServer) Recv() (*ResultResp, error) {
+	m := new(ResultResp)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(OrchestratorServer).SetResult(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/github.com.eonias189.calculationService.proto.Orchestrator/SetResult",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrchestratorServer).SetResult(ctx, req.(*ResultResp))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Orchestrator_Pong_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PongReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OrchestratorServer).Pong(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/github.com.eonias189.calculationService.proto.Orchestrator/Pong",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrchestratorServer).Pong(ctx, req.(*PongReq))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
 // Orchestrator_ServiceDesc is the grpc.ServiceDesc for Orchestrator service.
@@ -184,21 +124,13 @@ func _Orchestrator_Pong_Handler(srv interface{}, ctx context.Context, dec func(i
 var Orchestrator_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "github.com.eonias189.calculationService.proto.Orchestrator",
 	HandlerType: (*OrchestratorServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "SetResult",
-			Handler:    _Orchestrator_SetResult_Handler,
-		},
-		{
-			MethodName: "Pong",
-			Handler:    _Orchestrator_Pong_Handler,
-		},
-	},
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Connect",
 			Handler:       _Orchestrator_Connect_Handler,
 			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "proto/orchestrator.proto",

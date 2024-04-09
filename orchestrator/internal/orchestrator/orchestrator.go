@@ -3,11 +3,15 @@ package orchestrator
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
+	"strconv"
 	"time"
 
 	pb "github.com/eonias189/calculationService/orchestrator/internal/proto"
 	"github.com/eonias189/calculationService/orchestrator/internal/service"
+	"github.com/pkg/errors"
+	"google.golang.org/grpc/metadata"
 )
 
 type Service[T any] interface {
@@ -25,27 +29,51 @@ type Orchestrator struct {
 	pb.UnimplementedOrchestratorServer
 }
 
-func (o *Orchestrator) Connect(in *pb.ConnReq, conn pb.Orchestrator_ConnectServer) error {
-	o.logger.Info(in.String())
-	for {
-		err := conn.Send(&pb.Task{Id: 1, Expression: "2 + 2 * 2", Timeouts: &pb.Timeouts{Add: 3}})
-		if err != nil {
-			o.logger.With(slog.String("while", "sending message")).Error(err.Error())
-			break
-		}
-		time.Sleep(time.Second * 1000)
+func (o *Orchestrator) Connect(conn pb.Orchestrator_ConnectServer) error {
+	metadata, ok := metadata.FromIncomingContext(conn.Context())
+
+	if !ok {
+		return errors.Errorf("metadata is invalid or not provided")
 	}
-	return nil
-}
 
-func (o *Orchestrator) Pong(ctx context.Context, req *pb.PongReq) (*pb.OkResp, error) {
-	o.logger.Info(req.String())
-	return &pb.OkResp{Ok: true}, nil
-}
+	maxThreadsSlice := metadata.Get("maxThreads")
+	if len(maxThreadsSlice) == 0 {
+		return errors.Errorf("metadata is invalid or not provided")
+	}
 
-func (o *Orchestrator) SetResult(ctx context.Context, req *pb.ResultResp) (*pb.OkResp, error) {
-	o.logger.With(slog.String("while", "receiving result")).Info(req.String())
-	return &pb.OkResp{Ok: true}, nil
+	maxThreads, err := strconv.Atoi(maxThreadsSlice[0])
+	if err != nil {
+		return errors.Errorf("metadata is invalid or not provided")
+	}
+
+	fmt.Println(maxThreads)
+	cancel := make(chan struct{})
+
+	go func() {
+		for {
+			msg, err := conn.Recv()
+			if err != nil {
+				fmt.Println(err)
+				cancel <- struct{}{}
+				return
+			}
+			fmt.Println(msg)
+		}
+	}()
+
+	for {
+		select {
+		case <-cancel:
+			return io.EOF
+		case <-time.After(time.Second * 10):
+			err := conn.Send(&pb.Task{Id: 1, Expression: "2 + 2 * 2", Timeouts: &pb.Timeouts{Add: 3}})
+			if err != nil {
+				o.logger.With(slog.String("while", "sending message")).Error(err.Error())
+				break
+			}
+		}
+
+	}
 }
 
 func (o *Orchestrator) Tasks(limit, offset int) ([]service.Task, error) {
