@@ -3,17 +3,12 @@ package config
 import (
 	"fmt"
 	"os"
-	"strconv"
 )
 
 type Config struct {
-	GRPCAddress      string
-	RestApiAddress   string
-	PostgresHost     string
-	PostgresPort     uint16
-	PostgresDB       string
-	PostgresUser     string
-	PostgresPassowrd string
+	GRPCAddress  string
+	HttpAddress  string
+	PostgresConn string
 }
 
 func ErrMissingEnvParam(param string) error {
@@ -26,48 +21,20 @@ func Get() (*Config, error) {
 		return nil, ErrMissingEnvParam("GRPC_ADDRESS")
 	}
 
-	restAddr := os.Getenv("REST_API_ADDRESS")
-	if restAddr == "" {
-		return nil, ErrMissingEnvParam("REST_API_ADDRESS")
+	httpAddr := os.Getenv("HTTP_ADDRESS")
+	if httpAddr == "" {
+		return nil, ErrMissingEnvParam("HTTP_ADDRESS")
 	}
 
-	pgHost := os.Getenv("POSTGRES_HOST")
-	if pgHost == "" {
-		return nil, ErrMissingEnvParam("POSTGRES_HOST")
-	}
-
-	pgPortStr := os.Getenv("POSTGRES_PORT")
-	if pgPortStr == "" {
-		return nil, ErrMissingEnvParam("POSTGRES_PORT")
-	}
-	pgPortInt, err := strconv.Atoi(pgPortStr)
-	if err != nil {
-		return nil, err
-	}
-
-	pgDB := os.Getenv("POSTGRES_DB")
-	if pgDB == "" {
-		return nil, ErrMissingEnvParam("POSTGRES_DB")
-	}
-
-	pgUser := os.Getenv("POSTGRES_USER")
-	if pgUser == "" {
-		return nil, ErrMissingEnvParam("POSTGRES_USER")
-	}
-
-	pgPassword := os.Getenv("POSTGRES_PASSWORD")
-	if pgPassword == "" {
-		return nil, ErrMissingEnvParam("POSTGRES_PASSWORD")
+	pgConn := os.Getenv("POSTGRES_CONN")
+	if pgConn == "" {
+		return nil, ErrMissingEnvParam("POSTGRES_CONN")
 	}
 
 	return &Config{
-		GRPCAddress:      grpcAddr,
-		RestApiAddress:   restAddr,
-		PostgresHost:     pgHost,
-		PostgresPort:     uint16(pgPortInt),
-		PostgresDB:       pgDB,
-		PostgresUser:     pgUser,
-		PostgresPassowrd: pgPassword,
+		GRPCAddress:  grpcAddr,
+		HttpAddress:  httpAddr,
+		PostgresConn: pgConn,
 	}, nil
 
 }

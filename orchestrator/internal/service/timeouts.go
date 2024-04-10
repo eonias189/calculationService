@@ -5,62 +5,86 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Timeouts struct {
-	Add int64 `json:"add"`
-	Sub int64 `json:"sub"`
-	Mul int64 `json:"mul"`
-	Div int64 `json:"div"`
+	Id     int64
+	UserId int64
+	Add    int64
+	Sub    int64
+	Mul    int64
+	Div    int64
 }
 
 var (
 	DefaultTimeouts = Timeouts{}
 )
 
-type TimeoutSerice struct {
-	conn *pgx.Conn
+type TimeoutsSerice struct {
+	pool *pgxpool.Pool
 }
 
-func (ts *TimeoutSerice) init() error {
+func (ts *TimeoutsSerice) init() error {
 	query := `CREATE TABLE IF NOT EXISTS timeouts (
-		id SERIAL PRIMARY KEY,
-		userId INTEGER,
+		user_id INTEGER UNIQUE,
 		add INTEGER,
 		sub INTEGER,
 		mul INTEGER,
 		div INTEGER
 	)`
 
-	_, err := ts.conn.Exec(query)
-	return err
+	return ts.pool.AcquireFunc(context.TODO(), func(c *pgxpool.Conn) error {
+		_, err := c.Exec(context.TODO(), query)
+		return err
+	})
 }
 
-func (ts *TimeoutSerice) Load(ctx context.Context) (Timeouts, error) {
-	query := `SELECT FROM timeouts WHERE id=$1`
-
-	var (
-		id     int64
-		userId int64
-		res    Timeouts
-	)
-
-	row := ts.conn.QueryRowEx(ctx, query, nil, 1)
-	err := row.Scan(&id, &userId, &res.Add, &res.Sub, &res.Mul, &res.Div)
+func (ts *TimeoutsSerice) Load(userId int64) (Timeouts, error) {
+	query := `SELECT * FROM timeouts WHERE user_id=$1`
+	var timeouts Timeouts
+	err := ts.pool.AcquireFunc(context.TODO(), func(c *pgxpool.Conn) error {
+		return c.QueryRow(context.TODO(), query, userId).Scan(&timeouts.Id, &timeouts.UserId, &timeouts.Add, &timeouts.Sub, &timeouts.Mul, &timeouts.Div)
+	})
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return DefaultTimeouts, nil
+		return Timeouts{}, ErrNotFound
 	}
 
-	return res, err
+	if err != nil {
+		return Timeouts{}, err
+	}
+
+	return timeouts, nil
 }
 
-func (ts *TimeoutSerice) Save(ctx context.Context, timeouts Timeouts) error {
-	return nil
+func (ts *TimeoutsSerice) Add(timeouts Timeouts) error {
+	query := `INSERT INTO timeouts (userId, add, sub, mul, div) VALUES ($1, $2, $3, $4, $5)`
+	return ts.pool.AcquireFunc(context.TODO(), func(c *pgxpool.Conn) error {
+		_, err := c.Exec(context.TODO(), query, timeouts.UserId, timeouts.Add, timeouts.Sub, timeouts.Mul, timeouts.Div)
+		return err
+	})
 }
 
-func NewTimeoutsService(conn *pgx.Conn) (*TimeoutSerice, error) {
-	ts := &TimeoutSerice{conn: conn}
+func (ts *TimeoutsSerice) Update(timeouts Timeouts) error {
+	query := `UPDATE timeouts SET add=$1, sub=$2, mul=$3, div=$4 WHERE user_id=$5`
+	return ts.pool.AcquireFunc(context.TODO(), func(c *pgxpool.Conn) error {
+		_, err := c.Exec(context.TODO(), query, timeouts.Add, timeouts.Sub, timeouts.Mul, timeouts.Div, timeouts.UserId)
+		return err
+	})
+}
+
+func (ts *TimeoutsSerice) Save(timeouts Timeouts) error {
+	_, wasnt := ts.Load(timeouts.UserId)
+	if errors.Is(wasnt, ErrNotFound) {
+		return ts.Add(timeouts)
+	}
+
+	return ts.Update(timeouts)
+}
+
+func NewTimeoutsService(pool *pgxpool.Pool) (*TimeoutsSerice, error) {
+	ts := &TimeoutsSerice{pool: pool}
 	err := ts.init()
 
 	if err != nil {
