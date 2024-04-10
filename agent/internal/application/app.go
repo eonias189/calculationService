@@ -63,8 +63,8 @@ type Application struct {
 	address    string
 }
 
-func (a *Application) SetMetadata(ctx context.Context) context.Context {
-	return metadata.AppendToOutgoingContext(ctx, "maxThreads", fmt.Sprint(a.maxThreads))
+func SetConnMetadata(ctx context.Context, id int64) context.Context {
+	return metadata.AppendToOutgoingContext(ctx, "id", fmt.Sprint(id))
 }
 
 func (a *Application) GetTasks(ctx context.Context, conn pb.Orchestrator_ConnectClient, out chan<- *pb.Task) func() error {
@@ -152,9 +152,48 @@ func (a *Application) SendResults(ctx context.Context, conn pb.Orchestrator_Conn
 
 }
 
-func (a *Application) Run(ctx context.Context) {
-	metadataCtx := a.SetMetadata(ctx)
+func (a *Application) Register(ctx context.Context, cli pb.OrchestratorClient) int64 {
+	const (
+		interval = time.Second * 5
+	)
+	req := &pb.RegisterReq{MaxThreads: int64(a.maxThreads)}
+	var resp *pb.RegisterResp
 
+	utils.TryUntilSuccess(ctx, func() error {
+		r, err := cli.Register(context.TODO(), req)
+		if err == nil {
+			resp = r
+		} else {
+			logger.Error(err)
+		}
+		return err
+	}, interval)
+
+	return resp.GetId()
+}
+
+func (a *Application) GetCli(ctx context.Context) pb.OrchestratorClient {
+	const (
+		interval = time.Second * 5
+	)
+
+	var conn *grpc.ClientConn
+	utils.TryUntilSuccess(ctx, func() error {
+		cliConn, err := grpc.Dial(a.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+		if err == nil {
+			conn = cliConn
+		} else {
+			logger.Error(err)
+		}
+
+		return err
+	}, interval)
+
+	return pb.NewOrchestratorClient(conn)
+}
+
+func (a *Application) Run(ctx context.Context) {
 	const (
 		interval = time.Second * 10
 	)
@@ -165,17 +204,13 @@ func (a *Application) Run(ctx context.Context) {
 	a.wp.Start(ctx)
 	a.SolveTasks(ctx, tasks, resps)
 
+	cli := a.GetCli(ctx)
+	logger.Info("got client")
+
+	id := a.Register(ctx, cli)
+	metadataCtx := SetConnMetadata(context.Background(), id)
+
 	for {
-		cliConn, err := grpc.Dial(a.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			logger.Error(err)
-			time.Sleep(interval)
-			continue
-		}
-
-		logger.Info("connected")
-
-		cli := pb.NewOrchestratorClient(cliConn)
 		conn, err := cli.Connect(metadataCtx)
 		if err != nil {
 			logger.Error(err)

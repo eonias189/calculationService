@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OrchestratorClient interface {
+	Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterResp, error)
 	Connect(ctx context.Context, opts ...grpc.CallOption) (Orchestrator_ConnectClient, error)
 }
 
@@ -31,6 +32,15 @@ type orchestratorClient struct {
 
 func NewOrchestratorClient(cc grpc.ClientConnInterface) OrchestratorClient {
 	return &orchestratorClient{cc}
+}
+
+func (c *orchestratorClient) Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterResp, error) {
+	out := new(RegisterResp)
+	err := c.cc.Invoke(ctx, "/github.com.eonias189.calculationService.proto.Orchestrator/Register", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *orchestratorClient) Connect(ctx context.Context, opts ...grpc.CallOption) (Orchestrator_ConnectClient, error) {
@@ -68,6 +78,7 @@ func (x *orchestratorConnectClient) Recv() (*Task, error) {
 // All implementations must embed UnimplementedOrchestratorServer
 // for forward compatibility
 type OrchestratorServer interface {
+	Register(context.Context, *RegisterReq) (*RegisterResp, error)
 	Connect(Orchestrator_ConnectServer) error
 	mustEmbedUnimplementedOrchestratorServer()
 }
@@ -76,6 +87,9 @@ type OrchestratorServer interface {
 type UnimplementedOrchestratorServer struct {
 }
 
+func (UnimplementedOrchestratorServer) Register(context.Context, *RegisterReq) (*RegisterResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
+}
 func (UnimplementedOrchestratorServer) Connect(Orchestrator_ConnectServer) error {
 	return status.Errorf(codes.Unimplemented, "method Connect not implemented")
 }
@@ -90,6 +104,24 @@ type UnsafeOrchestratorServer interface {
 
 func RegisterOrchestratorServer(s grpc.ServiceRegistrar, srv OrchestratorServer) {
 	s.RegisterService(&Orchestrator_ServiceDesc, srv)
+}
+
+func _Orchestrator_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrchestratorServer).Register(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/github.com.eonias189.calculationService.proto.Orchestrator/Register",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrchestratorServer).Register(ctx, req.(*RegisterReq))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Orchestrator_Connect_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -124,7 +156,12 @@ func (x *orchestratorConnectServer) Recv() (*ResultResp, error) {
 var Orchestrator_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "github.com.eonias189.calculationService.proto.Orchestrator",
 	HandlerType: (*OrchestratorServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Register",
+			Handler:    _Orchestrator_Register_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Connect",

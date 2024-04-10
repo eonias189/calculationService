@@ -5,18 +5,23 @@ package github.com.eonias189.calculationService.proto;
 option go_package = "/pb";
 
 service Orchestrator {
+    rpc Register(RegisterReq) returns (RegisterResp);
     rpc Connect (stream ResultResp) returns (stream Task);
 
 }
 
-message ResultResp {
-    int64 taskId = 2;
-    double result = 3;
-    bool error = 4;
-    int64 sendTime = 5;
-
+message RegisterReq {
+    int64 maxThreads = 1;
 }
 
-message OkResp {
-    bool ok = 1;
+message RegisterResp {
+    int64 id = 1;
+}
+
+message ResultResp {
+    int64 taskId = 1;
+    double result = 2;
+    bool error = 3;
+    int64 sendTime = 4;
+
 }

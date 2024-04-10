@@ -29,24 +29,39 @@ type Orchestrator struct {
 	pb.UnimplementedOrchestratorServer
 }
 
-func (o *Orchestrator) Connect(conn pb.Orchestrator_ConnectServer) error {
-	metadata, ok := metadata.FromIncomingContext(conn.Context())
+func (o *Orchestrator) Register(ctx context.Context, req *pb.RegisterReq) (*pb.RegisterResp, error) {
+	fmt.Println("registring with", req.GetMaxThreads())
+	return &pb.RegisterResp{Id: 0}, nil
+}
 
+// Returns agent id
+func ReadConnectMetadata(ctx context.Context) (int64, error) {
+	err := errors.Errorf("metadata is invalid or not provided")
+	metadata, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return errors.Errorf("metadata is invalid or not provided")
+		return 0, err
 	}
 
-	maxThreadsSlice := metadata.Get("maxThreads")
-	if len(maxThreadsSlice) == 0 {
-		return errors.Errorf("metadata is invalid or not provided")
+	ids := metadata.Get("id")
+	if len(ids) == 0 {
+		return 0, err
 	}
 
-	maxThreads, err := strconv.Atoi(maxThreadsSlice[0])
+	id, e := strconv.Atoi(ids[0])
+	if e != nil {
+		return 0, err
+	}
+
+	return int64(id), nil
+}
+
+func (o *Orchestrator) Connect(conn pb.Orchestrator_ConnectServer) error {
+	agentId, err := ReadConnectMetadata(conn.Context())
 	if err != nil {
-		return errors.Errorf("metadata is invalid or not provided")
+		return err
 	}
 
-	fmt.Println(maxThreads)
+	fmt.Println("agentId", agentId)
 	cancel := make(chan struct{})
 
 	go func() {
@@ -57,19 +72,20 @@ func (o *Orchestrator) Connect(conn pb.Orchestrator_ConnectServer) error {
 				cancel <- struct{}{}
 				return
 			}
-			fmt.Println(msg)
+			fmt.Println("received msg", msg)
 		}
 	}()
 
 	for {
 		select {
 		case <-cancel:
+			fmt.Println("closing conn")
 			return io.EOF
 		case <-time.After(time.Second * 10):
 			err := conn.Send(&pb.Task{Id: 1, Expression: "2 + 2 * 2", Timeouts: &pb.Timeouts{Add: 3}})
 			if err != nil {
 				o.logger.With(slog.String("while", "sending message")).Error(err.Error())
-				break
+				return err
 			}
 		}
 
