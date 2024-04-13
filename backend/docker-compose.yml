@@ -27,11 +27,15 @@ services:
       - 5050:80
 
   orchestrator:
-    image: eonias189/calculation-service/orchestrator
+    build:
+      context: .
+      dockerfile: Dockerfile.orchestrator.dev
     environment:
       - GRPC_ADDRESS=0.0.0.0:8080
       - HTTP_ADDRESS=0.0.0.0:8081
       - POSTGRES_CONN=postgresql://postgres:secret@postgres:5432/db
+    volumes:
+      - .:/app
     depends_on:
       - postgres
     restart: always
@@ -44,14 +48,6 @@ services:
     environment:
       - ORCHESTRATOR_ADDRESS=orchestrator:8080
       - MAX_THREADS=10
-    depends_on:
-      - orchestrator
-
-  agent_2:
-    image: eonias189/calculation-service/agent
-    environment:
-      - ORCHESTRATOR_ADDRESS=orchestrator:8080
-      - MAX_THREADS=20
     depends_on:
       - orchestrator
 
