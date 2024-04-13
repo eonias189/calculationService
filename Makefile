@@ -7,4 +7,7 @@ build-orchestrator:
 build-agent:
 	cd backend && docker build -t eonias189/calculation-service/agent -f Dockerfile.agent . && cd ..
 
+build-api:
+	cd backend && docker build -t eonias189/calculation-service/api -f Dockerfile.api . && cd ..
+
 .PHONY: gen

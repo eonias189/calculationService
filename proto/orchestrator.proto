@@ -7,8 +7,11 @@ option go_package = "/pb";
 service Orchestrator {
     rpc Register(RegisterReq) returns (RegisterResp);
     rpc Connect (stream ResultResp) returns (stream Task);
+    rpc Distribute(Task) returns (Empty);
 
 }
+
+message Empty {}
 
 message RegisterReq {
     int64 maxThreads = 1;

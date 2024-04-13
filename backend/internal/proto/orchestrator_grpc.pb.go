@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type OrchestratorClient interface {
 	Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterResp, error)
 	Connect(ctx context.Context, opts ...grpc.CallOption) (Orchestrator_ConnectClient, error)
+	Distribute(ctx context.Context, in *Task, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type orchestratorClient struct {
@@ -74,12 +75,22 @@ func (x *orchestratorConnectClient) Recv() (*Task, error) {
 	return m, nil
 }
 
+func (c *orchestratorClient) Distribute(ctx context.Context, in *Task, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/github.com.eonias189.calculationService.proto.Orchestrator/Distribute", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrchestratorServer is the server API for Orchestrator service.
 // All implementations must embed UnimplementedOrchestratorServer
 // for forward compatibility
 type OrchestratorServer interface {
 	Register(context.Context, *RegisterReq) (*RegisterResp, error)
 	Connect(Orchestrator_ConnectServer) error
+	Distribute(context.Context, *Task) (*Empty, error)
 	mustEmbedUnimplementedOrchestratorServer()
 }
 
@@ -92,6 +103,9 @@ func (UnimplementedOrchestratorServer) Register(context.Context, *RegisterReq) (
 }
 func (UnimplementedOrchestratorServer) Connect(Orchestrator_ConnectServer) error {
 	return status.Errorf(codes.Unimplemented, "method Connect not implemented")
+}
+func (UnimplementedOrchestratorServer) Distribute(context.Context, *Task) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Distribute not implemented")
 }
 func (UnimplementedOrchestratorServer) mustEmbedUnimplementedOrchestratorServer() {}
 
@@ -150,6 +164,24 @@ func (x *orchestratorConnectServer) Recv() (*ResultResp, error) {
 	return m, nil
 }
 
+func _Orchestrator_Distribute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Task)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrchestratorServer).Distribute(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/github.com.eonias189.calculationService.proto.Orchestrator/Distribute",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrchestratorServer).Distribute(ctx, req.(*Task))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Orchestrator_ServiceDesc is the grpc.ServiceDesc for Orchestrator service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -160,6 +192,10 @@ var Orchestrator_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Register",
 			Handler:    _Orchestrator_Register_Handler,
+		},
+		{
+			MethodName: "Distribute",
+			Handler:    _Orchestrator_Distribute_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

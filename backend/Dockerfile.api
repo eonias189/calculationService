@@ -1,0 +1,23 @@
+FROM golang:1.22-alpine AS builder
+
+WORKDIR /build
+
+# Download dependencies.
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
+
+# Copy application source.
+COPY . .
+
+# Build the application.
+RUN go build -o bin/application ./cmd/api
+
+# Prepare executor image.
+FROM alpine:3.19 AS runner
+
+WORKDIR /app
+
+COPY --from=builder /build/bin/application ./run
+
+# Run the application.
+ENTRYPOINT [ "./run" ]

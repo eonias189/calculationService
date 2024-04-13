@@ -3,7 +3,6 @@ package orchestrator
 import (
 	"context"
 	"net"
-	"net/http"
 	"time"
 
 	"github.com/eonias189/calculationService/backend/internal/config/orchestrator_config"
@@ -13,10 +12,8 @@ import (
 	pb "github.com/eonias189/calculationService/backend/internal/proto"
 	"github.com/eonias189/calculationService/backend/internal/service"
 	use_connect "github.com/eonias189/calculationService/backend/internal/use_cases/connect"
+	use_distribute "github.com/eonias189/calculationService/backend/internal/use_cases/distribute"
 	use_register "github.com/eonias189/calculationService/backend/internal/use_cases/register"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/render"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -30,55 +27,10 @@ type Application struct {
 	cfg             orchestrator_config.Config
 }
 
-func (a *Application) StartHttpServer(ctx context.Context) func() error {
-	return func() error {
-		r := chi.NewRouter()
-		r.Use(middleware.Logger)
-		r.Use(middleware.Recoverer)
-
-		api := chi.NewRouter()
-		api.Use(render.SetContentType(render.ContentTypeJSON))
-
-		api.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-			render.JSON(w, r, render.M{"message": "pong"})
-		})
-
-		api.Get("/distribute", func(w http.ResponseWriter, r *http.Request) {
-			t := service.Task{Expression: "2 + 2 * 2", UserId: 1, Status: service.TaskStatusPending}
-			id, err := a.taskService.Add(t)
-			if err != nil {
-				render.Status(r, http.StatusInternalServerError)
-				render.JSON(w, r, render.M{"reason": err.Error()})
-				return
-			}
-			err = a.distributor.Distribute(&pb.Task{Id: id, Expression: t.Expression, Timeouts: &pb.Timeouts{Add: 10, Sub: 2, Mul: 15, Div: 4}})
-
-			if err != nil {
-				render.Status(r, http.StatusInternalServerError)
-				render.JSON(w, r, render.M{"reason": err.Error()})
-				return
-			}
-			render.JSON(w, r, render.M{"message": "ok"})
-		})
-
-		r.Mount("/api", api)
-
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-
-		case err := <-utils.Await(func() error {
-			return http.ListenAndServe(a.cfg.HttpAddress, r)
-		}):
-			return err
-		}
-	}
-
-}
-
 type GrpcHandler struct {
-	registerer use_register.Registerer
-	connector  use_connect.Connector
+	registerer    use_register.Registerer
+	connector     use_connect.Connector
+	distributable use_distribute.Distributable
 	pb.UnimplementedOrchestratorServer
 }
 
@@ -90,17 +42,22 @@ func (gh *GrpcHandler) Register(ctx context.Context, req *pb.RegisterReq) (*pb.R
 	return gh.registerer.Register(ctx, req)
 }
 
+func (gh *GrpcHandler) Distribute(ctx context.Context, task *pb.Task) (*pb.Empty, error) {
+	return gh.distributable.Distribute(ctx, task)
+}
+
 func (a *Application) StartGrpcServer(ctx context.Context) func() error {
 	return func() error {
-		listener, err := net.Listen("tcp", a.cfg.GRPCAddress)
+		listener, err := net.Listen("tcp", a.cfg.Address)
 		if err != nil {
 			return err
 		}
 
 		serv := grpc.NewServer()
 		handler := &GrpcHandler{
-			registerer: use_register.MakeHandler(a.agentService),
-			connector:  use_connect.MakeHandler(a.taskService, a.agentService, a.timeoutsService, a.distributor),
+			registerer:    use_register.MakeHandler(a.agentService),
+			connector:     use_connect.MakeHandler(a.taskService, a.agentService, a.timeoutsService, a.distributor),
+			distributable: use_distribute.MakeHandler(a.distributor),
 		}
 		pb.RegisterOrchestratorServer(serv, handler)
 
@@ -140,7 +97,6 @@ func (a *Application) Run(ctx context.Context) error {
 
 	a.distributor.StartPushing(time.Second * 5)
 	g, ctx := errgroup.WithContext(ctx)
-	g.Go(a.StartHttpServer(ctx))
 	g.Go(a.StartGrpcServer(ctx))
 
 	return g.Wait()
