@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
-	"errors"
 
-	errs "github.com/eonias189/calculationService/backend/internal/errors"
+	"github.com/eonias189/calculationService/backend/internal/errors"
+	"github.com/eonias189/calculationService/backend/internal/logger"
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -27,6 +27,10 @@ type Task struct {
 	Status     TaskStatus
 }
 
+type TaskWithTimeouts struct {
+	Task
+	Timeouts
+}
 type TaskService struct {
 	pool *pgxpool.Pool
 }
@@ -81,12 +85,51 @@ func (ts *TaskService) GetAllForUser(userId int64, limit, offset int) ([]Task, e
 		task := Task{}
 		err = rows.Scan(&task.Id, &task.UserId, &task.Executor, &task.Expression, &task.Result, &task.Status)
 		if err != nil {
+			logger.Error(err)
 			continue
 		}
 		res = append(res, task)
 	}
 
 	return res, nil
+}
+
+func (ts *TaskService) GetExecutingForAgent(id int64) ([]TaskWithTimeouts, error) {
+	query := `SELECT * FROM tasks JOIN timeouts ON tasks.user_id=timeouts.user_id WHERE executor=$1 and status='executing'`
+	conn, err := ts.pool.Acquire(context.TODO())
+	if err != nil {
+		return []TaskWithTimeouts{}, err
+	}
+
+	defer conn.Release()
+	rows, err := conn.Query(context.TODO(), query, id)
+	if err != nil {
+		return []TaskWithTimeouts{}, err
+	}
+
+	res := []TaskWithTimeouts{}
+	defer rows.Close()
+	for rows.Next() {
+		var task TaskWithTimeouts
+		err := rows.Scan(&task.Task.Id, &task.Task.UserId, &task.Task.Executor, &task.Task.Expression,
+			&task.Task.Result, &task.Task.Status, &task.Timeouts.UserId, &task.Timeouts.Add,
+			&task.Timeouts.Sub, &task.Timeouts.Mul, &task.Timeouts.Div)
+		if err != nil {
+			logger.Error(err)
+			continue
+		}
+		res = append(res, task)
+	}
+
+	return res, nil
+}
+
+func (ts *TaskService) SetUnexecutingForAgent(id int64) error {
+	query := `UPDATE tasks SET executor=0, status='pending' WHERE executor=$1 and status='executing'`
+	return ts.pool.AcquireFunc(context.TODO(), func(c *pgxpool.Conn) error {
+		_, err := c.Exec(context.TODO(), query, id)
+		return err
+	})
 }
 
 func (ts *TaskService) GetById(id int64) (Task, error) {
@@ -101,9 +144,9 @@ func (ts *TaskService) GetById(id int64) (Task, error) {
 	defer conn.Release()
 	row := conn.QueryRow(context.TODO(), query, id)
 
-	err = row.Scan(&res.Id, &res.Executor, &res.Expression, &res.Result, &res.Status)
-	if errors.Is(pgx.ErrNoRows, err) {
-		return res, errs.ErrNotFound
+	err = row.Scan(&res.Id, &res.UserId, &res.Executor, &res.Expression, &res.Result, &res.Status)
+	if err != nil && err.Error() == pgx.ErrNoRows.Error() {
+		return res, errors.ErrNotFound
 	}
 
 	if err != nil {
@@ -111,6 +154,17 @@ func (ts *TaskService) GetById(id int64) (Task, error) {
 	}
 
 	return res, nil
+}
+
+func (ts *TaskService) SetPendingForDisactiveAgents() error {
+	query := `
+	UPDATE tasks SET executor=0, status='pending' WHERE status='executing' AND executor IN (SELECT id FROM agents WHERE active=false);
+	UPDATE agents SET running_threads=0 WHERE active=false
+	`
+	return ts.pool.AcquireFunc(context.TODO(), func(c *pgxpool.Conn) error {
+		_, err := c.Exec(context.TODO(), query)
+		return err
+	})
 }
 
 func (ts *TaskService) Update(task Task) error {
@@ -127,6 +181,36 @@ func (ts *TaskService) Delete(id int64) error {
 		_, err := c.Exec(context.TODO(), query, id)
 		return err
 	})
+}
+
+func (ts *TaskService) GetAllPending() ([]TaskWithTimeouts, error) {
+	query := `SELECT * FROM tasks JOIN timeouts ON tasks.user_id=timeouts.user_id WHERE status='pending'`
+	conn, err := ts.pool.Acquire(context.TODO())
+	if err != nil {
+		return []TaskWithTimeouts{}, err
+	}
+
+	defer conn.Release()
+	rows, err := conn.Query(context.TODO(), query)
+	if err != nil {
+		return []TaskWithTimeouts{}, err
+	}
+
+	defer rows.Close()
+	res := []TaskWithTimeouts{}
+	for rows.Next() {
+		var task TaskWithTimeouts
+		err := rows.Scan(&task.Task.Id, &task.Task.UserId, &task.Task.Executor, &task.Task.Expression,
+			&task.Task.Result, &task.Task.Status, &task.Timeouts.UserId, &task.Timeouts.Add, &task.Timeouts.Sub,
+			&task.Timeouts.Mul, &task.Timeouts.Div)
+		if err != nil {
+			logger.Error(err)
+			continue
+		}
+		res = append(res, task)
+	}
+
+	return res, nil
 }
 
 func NewTaskService(pool *pgxpool.Pool) (*TaskService, error) {

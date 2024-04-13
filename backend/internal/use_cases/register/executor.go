@@ -7,7 +7,7 @@ type Executor struct {
 }
 
 func (s *Executor) Do(maxThreads int) (int64, error) {
-	return s.as.Add(service.Agent{MaxThreads: maxThreads})
+	return s.as.Add(service.Agent{Active: true, MaxThreads: maxThreads})
 }
 
 func NewExecutor(as AgentService) *Executor {

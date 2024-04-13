@@ -15,58 +15,6 @@ type Handler struct {
 	e *Executor
 }
 
-type ReceiveResultResp struct {
-	Result *pb.ResultResp
-	Err    error
-}
-
-func ReceiveResults(ctx context.Context, conn pb.Orchestrator_ConnectServer, out chan<- *pb.ResultResp) func() error {
-	return func() error {
-		for {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-
-			case resp := <-utils.Await(func() ReceiveResultResp {
-				res, err := conn.Recv()
-				return ReceiveResultResp{Result: res, Err: err}
-			}):
-				if resp.Err != nil {
-					return resp.Err
-				}
-
-				select {
-				case <-ctx.Done():
-					return ctx.Err()
-
-				case out <- resp.Result:
-				}
-			}
-		}
-	}
-}
-
-func SendTasks(ctx context.Context, conn pb.Orchestrator_ConnectServer, in <-chan *pb.Task) func() error {
-	return func() error {
-		for {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-
-			case task, ok := <-in:
-				if !ok {
-					return errors.ErrChanClosed
-				}
-
-				err := conn.Send(task)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-}
-
 func ReadConnectMetadata(ctx context.Context) (int64, error) {
 	metadata, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -92,24 +40,79 @@ func (h *Handler) Connect(conn pb.Orchestrator_ConnectServer) error {
 		return err
 	}
 
+	err = h.e.OnStart(id)
+	if err != nil {
+		return err
+	}
+
+	tasks, err := h.e.GetTasks(id)
+	if err != nil {
+		return err
+	}
+
+	defer h.e.OnConnClose(id)
+
 	g, ctx := errgroup.WithContext(context.Background())
-
-	tasks := make(chan *pb.Task)
 	results := make(chan *pb.ResultResp)
-
-	defer close(tasks)
 	defer close(results)
 
-	g.Go(SendTasks(ctx, conn, tasks))
-	g.Go(ReceiveResults(ctx, conn, results))
-	g.Go(h.e.Do(ctx, id, tasks, results))
+	// send tasks
+	g.Go(func() error {
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case task, ok := <-tasks:
+				if !ok {
+					return errors.ErrChanClosed
+				}
+				err := h.e.OnTask(id, task)
+				if err != nil {
+					return err
+				}
+
+				err = conn.Send(task)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	})
+
+	// receive responses
+	g.Go(func() error {
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case resp := <-utils.Await(func() struct {
+				Resp *pb.ResultResp
+				Err  error
+			} {
+				resp, err := conn.Recv()
+				return struct {
+					Resp *pb.ResultResp
+					Err  error
+				}{Resp: resp, Err: err}
+			}):
+				if resp.Err != nil {
+					return resp.Err
+				}
+
+				err = h.e.OnResult(id, resp.Resp)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	})
 
 	return g.Wait()
 
 }
 
-func MakeHandler(tasksService TaskService, agentsServise AgentService, timeoutsService TimeoutsService) Connector {
+func MakeHandler(tasksService TaskService, agentsServise AgentService, timeoutsService TimeoutsService, distributor Distributor) Connector {
 	return &Handler{
-		e: NewExecutor(tasksService, agentsServise, timeoutsService),
+		e: NewExecutor(tasksService, agentsServise, timeoutsService, distributor),
 	}
 }

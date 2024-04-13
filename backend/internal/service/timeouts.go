@@ -2,15 +2,13 @@ package service
 
 import (
 	"context"
-	"errors"
 
-	errs "github.com/eonias189/calculationService/backend/internal/errors"
+	"github.com/eonias189/calculationService/backend/internal/errors"
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Timeouts struct {
-	Id     int64
 	UserId int64
 	Add    int64
 	Sub    int64
@@ -45,11 +43,11 @@ func (ts *TimeoutsSerice) Load(userId int64) (Timeouts, error) {
 	query := `SELECT * FROM timeouts WHERE user_id=$1`
 	var timeouts Timeouts
 	err := ts.pool.AcquireFunc(context.TODO(), func(c *pgxpool.Conn) error {
-		return c.QueryRow(context.TODO(), query, userId).Scan(&timeouts.Id, &timeouts.UserId, &timeouts.Add, &timeouts.Sub, &timeouts.Mul, &timeouts.Div)
+		return c.QueryRow(context.TODO(), query, userId).Scan(&timeouts.UserId, &timeouts.Add, &timeouts.Sub, &timeouts.Mul, &timeouts.Div)
 	})
 
-	if errors.Is(err, pgx.ErrNoRows) {
-		return Timeouts{}, errs.ErrNotFound
+	if err != nil && err.Error() == pgx.ErrNoRows.Error() {
+		return DefaultTimeouts, nil
 	}
 
 	if err != nil {
@@ -77,7 +75,7 @@ func (ts *TimeoutsSerice) Update(timeouts Timeouts) error {
 
 func (ts *TimeoutsSerice) Save(timeouts Timeouts) error {
 	_, wasnt := ts.Load(timeouts.UserId)
-	if errors.Is(wasnt, errs.ErrNotFound) {
+	if wasnt != nil && wasnt.Error() == errors.ErrNotFound.Error() {
 		return ts.Add(timeouts)
 	}
 

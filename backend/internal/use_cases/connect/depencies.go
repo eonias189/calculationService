@@ -1,6 +1,9 @@
 package use_connect
 
-import "github.com/eonias189/calculationService/backend/internal/service"
+import (
+	pb "github.com/eonias189/calculationService/backend/internal/proto"
+	"github.com/eonias189/calculationService/backend/internal/service"
+)
 
 type AgentService interface {
 	GetById(id int64) (service.Agent, error)
@@ -9,9 +12,19 @@ type AgentService interface {
 }
 
 type TaskService interface {
+	GetById(id int64) (service.Task, error)
 	Update(task service.Task) error
+	SetUnexecutingForAgent(id int64) error
+	GetExecutingForAgent(id int64) ([]service.TaskWithTimeouts, error)
 }
 
 type TimeoutsService interface {
 	Load(userId int64) (service.Timeouts, error)
+}
+
+type Distributor interface {
+	Subscribe(id int64, maxTasks int) <-chan *pb.Task
+	Unsubscribe(id int64) error
+	Done(id int64) error
+	Distribute(task *pb.Task) error
 }

@@ -1,11 +1,10 @@
 package distributor
 
 import (
-	"context"
 	"sync"
+	"time"
 
 	"github.com/eonias189/calculationService/backend/internal/errors"
-	"github.com/eonias189/calculationService/backend/internal/lib/pool"
 	"github.com/eonias189/calculationService/backend/internal/lib/queue"
 )
 
@@ -19,7 +18,7 @@ type Distributor[T any] struct {
 	queue *queue.Queue[T]
 	conns map[int64]Connection[T]
 	mu    *sync.RWMutex
-	wp    *pool.WorkerPool
+	wg    *sync.WaitGroup
 }
 
 func (d *Distributor[T]) GetFreeConn() (int64, bool) {
@@ -42,9 +41,7 @@ func (d *Distributor[T]) ShiftAndDistribute(id int64) (bool, error) {
 		return false, errors.ErrConnectionDoesntExists
 	}
 
-	d.wp.AddTask(pool.NewTask(func() {
-		conn.Chan <- task
-	}))
+	conn.Chan <- task
 	conn.RunningTasks++
 
 	d.mu.RLock()
@@ -72,10 +69,6 @@ func (d *Distributor[T]) Subscribe(id int64, maxTasks int) <-chan T {
 	d.conns[id] = Connection[T]{MaxTasks: maxTasks, Chan: out}
 	d.mu.RUnlock()
 
-	if maxTasks != 0 {
-		d.ShiftAndDistribute(id)
-	}
-
 	return out
 }
 
@@ -85,11 +78,9 @@ func (d *Distributor[T]) Done(id int64) error {
 		return errors.ErrConnectionDoesntExists
 	}
 
-	if conn.RunningTasks == 0 {
-		return errors.ErrNegativeRunningTasksCount
+	if conn.RunningTasks > 0 {
+		conn.RunningTasks--
 	}
-
-	conn.RunningTasks--
 	d.mu.RLock()
 	d.conns[id] = conn
 	d.mu.RUnlock()
@@ -113,12 +104,23 @@ func (d *Distributor[T]) Unsubscribe(id int64) error {
 	return nil
 }
 
-func (d *Distributor[T]) Start(ctx context.Context) {
-	d.wp.Start(ctx)
+func (d *Distributor[T]) StartPushing(interval time.Duration) {
+	d.wg.Add(1)
+	go func() {
+		defer d.wg.Done()
+		for {
+			time.Sleep(interval)
+			free, found := d.GetFreeConn()
+			if !found {
+				continue
+			}
+			d.ShiftAndDistribute(free)
+		}
+	}()
 }
 
 func (d *Distributor[T]) Close() {
-	d.wp.Close()
+	d.wg.Wait()
 }
 
 func NewDistributor[T any](workers int) *Distributor[T] {
@@ -126,6 +128,6 @@ func NewDistributor[T any](workers int) *Distributor[T] {
 		queue: queue.NewQueue[T](),
 		conns: make(map[int64]Connection[T]),
 		mu:    &sync.RWMutex{},
-		wp:    pool.NewWorkerPool(workers),
+		wg:    &sync.WaitGroup{},
 	}
 }

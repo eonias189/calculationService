@@ -1,7 +1,6 @@
 package distributor
 
 import (
-	"context"
 	"errors"
 	"slices"
 	"testing"
@@ -24,10 +23,20 @@ func WithTimeout[R any](f func() R, timeout time.Duration) (R, error) {
 func TestDistributor(t *testing.T) {
 	t.Run("test simple", func(t *testing.T) {
 		d := NewDistributor[int](10)
-		ctx, cancel := context.WithCancel(context.Background())
-		defer d.Close()
-		defer cancel()
-		d.Start(ctx)
+
+		ch := d.Subscribe(1, 5)
+		tasks := make(chan int, 10)
+		defer close(tasks)
+
+		go func() {
+			for {
+				task, ok := <-ch
+				if !ok {
+					t.Log("err closed")
+				}
+				tasks <- task
+			}
+		}()
 
 		err, timeoutExceeded := WithTimeout(func() error { return d.Distribute(1) }, time.Second)
 		if timeoutExceeded != nil {
@@ -38,9 +47,7 @@ func TestDistributor(t *testing.T) {
 			t.Fatal(err.Error())
 		}
 
-		ch := d.Subscribe(1, 5)
-
-		task, timeoutExceeded := WithTimeout(func() int { return <-ch }, time.Second)
+		task, timeoutExceeded := WithTimeout(func() int { return <-tasks }, time.Second)
 		if timeoutExceeded != nil {
 			t.Fatal(timeoutExceeded.Error())
 		}
@@ -68,7 +75,7 @@ func TestDistributor(t *testing.T) {
 		res, err := WithTimeout(func() []int {
 			res := []int{}
 			for i := 0; i < 5; i++ {
-				res = append(res, <-ch)
+				res = append(res, <-tasks)
 			}
 			return res
 		}, time.Second*5)
@@ -88,7 +95,7 @@ func TestDistributor(t *testing.T) {
 			select {
 			case <-time.After(time.Second * 10):
 				extraTimeCh <- time.Now()
-			case <-ch:
+			case <-tasks:
 				extraTimeCh <- time.Now()
 			}
 		}()
@@ -114,11 +121,6 @@ func TestDistributor(t *testing.T) {
 			if err != nil {
 				t.Fatal(err.Error())
 			}
-		}
-
-		err = d.Done(1)
-		if err == nil {
-			t.Fatal("expected to got error")
 		}
 
 		g := errgroup.Group{}
