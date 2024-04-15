@@ -22,6 +22,8 @@ type Distributor[T any] struct {
 }
 
 func (d *Distributor[T]) GetFreeConn() (int64, bool) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 	for id, conn := range d.conns {
 		if conn.RunningTasks < conn.MaxTasks {
 			return id, true
@@ -36,7 +38,9 @@ func (d *Distributor[T]) ShiftAndDistribute(id int64) (bool, error) {
 		return false, nil
 	}
 
+	d.mu.RLock()
 	conn, ok := d.conns[id]
+	d.mu.RUnlock()
 	if !ok {
 		return false, errors.ErrConnectionDoesntExists
 	}
@@ -44,9 +48,9 @@ func (d *Distributor[T]) ShiftAndDistribute(id int64) (bool, error) {
 	conn.Chan <- task
 	conn.RunningTasks++
 
-	d.mu.RLock()
+	d.mu.Lock()
 	d.conns[id] = conn
-	d.mu.RUnlock()
+	d.mu.Unlock()
 
 	return true, nil
 }
@@ -65,15 +69,17 @@ func (d *Distributor[T]) Distribute(task T) error {
 
 func (d *Distributor[T]) Subscribe(id int64, maxTasks int) <-chan T {
 	out := make(chan T)
-	d.mu.RLock()
+	d.mu.Lock()
 	d.conns[id] = Connection[T]{MaxTasks: maxTasks, Chan: out}
-	d.mu.RUnlock()
+	d.mu.Unlock()
 
 	return out
 }
 
 func (d *Distributor[T]) Done(id int64) error {
+	d.mu.RLock()
 	conn, ok := d.conns[id]
+	d.mu.RUnlock()
 	if !ok {
 		return errors.ErrConnectionDoesntExists
 	}
@@ -81,25 +87,27 @@ func (d *Distributor[T]) Done(id int64) error {
 	if conn.RunningTasks > 0 {
 		conn.RunningTasks--
 	}
-	d.mu.RLock()
+	d.mu.Lock()
 	d.conns[id] = conn
-	d.mu.RUnlock()
+	d.mu.Unlock()
 
 	_, err := d.ShiftAndDistribute(id)
 	return err
 }
 
 func (d *Distributor[T]) Unsubscribe(id int64) error {
+	d.mu.RLock()
 	conn, ok := d.conns[id]
+	d.mu.RUnlock()
 	if !ok {
 		return errors.ErrConnectionDoesntExists
 	}
 
 	close(conn.Chan)
 
-	d.mu.RLock()
+	d.mu.Lock()
 	delete(d.conns, id)
-	d.mu.RUnlock()
+	d.mu.Unlock()
 
 	return nil
 }

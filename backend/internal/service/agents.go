@@ -2,8 +2,9 @@ package service
 
 import (
 	"context"
+	"errors"
 
-	"github.com/eonias189/calculationService/backend/internal/errors"
+	errs "github.com/eonias189/calculationService/backend/internal/errors"
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -91,9 +92,8 @@ func (as *AgentService) GetById(id int64) (Agent, error) {
 	row := conn.QueryRow(context.TODO(), query, id)
 
 	err = row.Scan(&res.Id, &res.Active, &res.Ping, &res.MaxThreads, &res.RunningThreads)
-	if err != nil && pgx.ErrNoRows.Error() == err.Error() {
-
-		return res, errors.ErrNotFound
+	if errors.Is(err, pgx.ErrNoRows) {
+		return res, errs.ErrNotFound
 	}
 
 	if err != nil {

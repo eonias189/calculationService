@@ -18,10 +18,6 @@ type TaskService interface {
 	GetExecutingForAgent(id int64) ([]service.TaskWithTimeouts, error)
 }
 
-type TimeoutsService interface {
-	Load(userId int64) (service.Timeouts, error)
-}
-
 type Distributor interface {
 	Subscribe(id int64, maxTasks int) <-chan *pb.Task
 	Unsubscribe(id int64) error

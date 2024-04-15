@@ -111,8 +111,8 @@ func (h *Handler) Connect(conn pb.Orchestrator_ConnectServer) error {
 
 }
 
-func MakeHandler(tasksService TaskService, agentsServise AgentService, timeoutsService TimeoutsService, distributor Distributor) Connector {
+func MakeHandler(tasksService TaskService, agentsServise AgentService, distributor Distributor) Connector {
 	return &Handler{
-		e: NewExecutor(tasksService, agentsServise, timeoutsService, distributor),
+		e: NewExecutor(tasksService, agentsServise, distributor),
 	}
 }

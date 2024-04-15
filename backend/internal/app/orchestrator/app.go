@@ -56,7 +56,7 @@ func (a *Application) StartGrpcServer(ctx context.Context) func() error {
 		serv := grpc.NewServer()
 		handler := &GrpcHandler{
 			registerer:    use_register.MakeHandler(a.agentService),
-			connector:     use_connect.MakeHandler(a.taskService, a.agentService, a.timeoutsService, a.distributor),
+			connector:     use_connect.MakeHandler(a.taskService, a.agentService, a.distributor),
 			distributable: use_distribute.MakeHandler(a.distributor),
 		}
 		pb.RegisterOrchestratorServer(serv, handler)

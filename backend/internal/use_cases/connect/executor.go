@@ -9,10 +9,9 @@ import (
 )
 
 type Executor struct {
-	agentService    AgentService
-	taskService     TaskService
-	timeoutsService TimeoutsService
-	distributor     Distributor
+	agentService AgentService
+	taskService  TaskService
+	distributor  Distributor
 }
 
 func (e *Executor) OnConnClose(id int64) error {
@@ -162,6 +161,6 @@ func (e *Executor) GetTasks(id int64) (<-chan *pb.Task, error) {
 	return e.distributor.Subscribe(id, agent.MaxThreads), nil
 }
 
-func NewExecutor(ts TaskService, as AgentService, tms TimeoutsService, d Distributor) *Executor {
-	return &Executor{agentService: as, taskService: ts, timeoutsService: tms, distributor: d}
+func NewExecutor(ts TaskService, as AgentService, d Distributor) *Executor {
+	return &Executor{agentService: as, taskService: ts, distributor: d}
 }

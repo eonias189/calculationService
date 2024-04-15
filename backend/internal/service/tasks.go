@@ -2,8 +2,9 @@ package service
 
 import (
 	"context"
+	"errors"
 
-	"github.com/eonias189/calculationService/backend/internal/errors"
+	errs "github.com/eonias189/calculationService/backend/internal/errors"
 	"github.com/eonias189/calculationService/backend/internal/logger"
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -38,7 +39,7 @@ type TaskService struct {
 func (ts *TaskService) init() error {
 	query := `CREATE TABLE IF NOT EXISTS tasks (
 		id SERIAL PRIMARY KEY,
-		user_id INTEGER,
+		user_id INTEGER references users(id),
 		executor INTEGER,
 		expression TEXT,
 		result double precision,
@@ -145,8 +146,8 @@ func (ts *TaskService) GetById(id int64) (Task, error) {
 	row := conn.QueryRow(context.TODO(), query, id)
 
 	err = row.Scan(&res.Id, &res.UserId, &res.Executor, &res.Expression, &res.Result, &res.Status)
-	if err != nil && err.Error() == pgx.ErrNoRows.Error() {
-		return res, errors.ErrNotFound
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Task{}, errs.ErrNotFound
 	}
 
 	if err != nil {

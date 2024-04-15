@@ -26,7 +26,6 @@ func TestDistributor(t *testing.T) {
 
 		ch := d.Subscribe(1, 5)
 		tasks := make(chan int, 10)
-		defer close(tasks)
 
 		go func() {
 			for {

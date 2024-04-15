@@ -10,28 +10,39 @@ import (
 	"github.com/eonias189/calculationService/backend/internal/logger"
 	pb "github.com/eonias189/calculationService/backend/internal/proto"
 	"github.com/eonias189/calculationService/backend/internal/service"
+	use_auth "github.com/eonias189/calculationService/backend/internal/use_cases/auth"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Application struct {
-	cfg          api_config.Config
-	cli          pb.OrchestratorClient
-	tasksService *service.TaskService
-	server       *http.Server
-	r            chi.Router
+	cfg             api_config.Config
+	cli             pb.OrchestratorClient
+	userService     *service.UserService
+	tasksService    *service.TaskService
+	agentService    *service.AgentService
+	timeoutsService *service.TimeoutsSerice
+	server          *http.Server
+	r               chi.Router
 }
 
 func (a *Application) MountHandlers() {
+	var (
+		secretKey     = "very very secret"
+		signingMethod = jwt.SigningMethodHS256
+		expTime       = time.Hour * 24 * 30
+	)
+	tokenAuth := jwtauth.New(signingMethod.Alg(), []byte(secretKey), nil)
 	a.r.Use(middleware.Logger)
 	a.r.Use(middleware.Recoverer)
 	a.r.Use(cors.AllowAll().Handler)
-
 	api := chi.NewRouter()
 	api.Use(render.SetContentType(render.ContentTypeJSON))
 	a.r.Mount("/api", api)
@@ -39,6 +50,8 @@ func (a *Application) MountHandlers() {
 	api.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		render.JSON(w, r, render.M{"message": "pong"})
 	})
+
+	api.Mount("/auth", use_auth.MakeHandler(a.userService, tokenAuth, expTime))
 
 	api.Get("/distrib", func(w http.ResponseWriter, r *http.Request) {
 		t := service.Task{Expression: "2 + 2 * 2", UserId: 1, Status: service.TaskStatusPending}
@@ -99,11 +112,30 @@ func (a *Application) init() error {
 	}
 
 	utils.TryUntilSuccess(context.TODO(), func() error { return pool.Ping(context.TODO()) }, time.Second*5)
+	us, err := service.NewUserService(pool)
+	if err != nil {
+		return err
+	}
+
 	ts, err := service.NewTaskService(pool)
 	if err != nil {
 		return err
 	}
 
+	as, err := service.NewAgentService(pool)
+	if err != nil {
+		return err
+	}
+
+	tmts, err := service.NewTimeoutsService(pool)
+	if err != nil {
+		return err
+	}
+
+	a.userService = us
+	a.tasksService = ts
+	a.agentService = as
+	a.timeoutsService = tmts
 	a.cli = a.GetCli(context.TODO())
 	a.tasksService = ts
 	return nil
