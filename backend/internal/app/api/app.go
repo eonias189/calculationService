@@ -11,13 +11,14 @@ import (
 	pb "github.com/eonias189/calculationService/backend/internal/proto"
 	"github.com/eonias189/calculationService/backend/internal/service"
 	use_auth "github.com/eonias189/calculationService/backend/internal/use_cases/auth"
+	use_tasks "github.com/eonias189/calculationService/backend/internal/use_cases/tasks"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -33,18 +34,31 @@ type Application struct {
 	r               chi.Router
 }
 
+type Distributer struct {
+	cli pb.OrchestratorClient
+}
+
+func (d *Distributer) Distribute(task *pb.Task) error {
+	_, err := d.cli.Distribute(context.TODO(), task)
+	return err
+}
+
 func (a *Application) MountHandlers() {
-	var (
+	const (
 		secretKey     = "very very secret"
-		signingMethod = jwt.SigningMethodHS256
+		signingMethod = "HS256"
 		expTime       = time.Hour * 24 * 30
 	)
-	tokenAuth := jwtauth.New(signingMethod.Alg(), []byte(secretKey), nil)
+	tokenAuth := jwtauth.New(signingMethod, []byte(secretKey), nil, jwt.WithRequiredClaim("user_id"))
+
 	a.r.Use(middleware.Logger)
 	a.r.Use(middleware.Recoverer)
-	a.r.Use(cors.AllowAll().Handler)
+
 	api := chi.NewRouter()
+
+	api.Use(cors.AllowAll().Handler)
 	api.Use(render.SetContentType(render.ContentTypeJSON))
+
 	a.r.Mount("/api", api)
 
 	api.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
@@ -52,31 +66,18 @@ func (a *Application) MountHandlers() {
 	})
 
 	api.Mount("/auth", use_auth.MakeHandler(a.userService, tokenAuth, expTime))
+	api.Mount("/tasks", use_tasks.MakeHandler(a.tasksService, a.timeoutsService, &Distributer{cli: a.cli}, tokenAuth))
 
-	api.Get("/distrib", func(w http.ResponseWriter, r *http.Request) {
-		t := service.Task{Expression: "2 + 2 * 2", UserId: 1, Status: service.TaskStatusPending}
-		id, err := a.tasksService.Add(t)
-		if err != nil {
-			render.Status(r, http.StatusInternalServerError)
-			render.JSON(w, r, render.M{"reason": err.Error()})
-			return
-		}
-
-		task := &pb.Task{Id: id, Expression: t.Expression, Timeouts: &pb.Timeouts{
-			Add: 10,
-			Sub: 2,
-			Mul: 10,
-			Div: 4,
-		}}
-
-		_, err = a.cli.Distribute(context.TODO(), task)
-		if err != nil {
-			render.Status(r, http.StatusInternalServerError)
-			render.JSON(w, r, render.M{"reason": err.Error()})
-			return
-		}
-
-		render.JSON(w, r, render.M{"message": "ok"})
+	api.Group(func(r chi.Router) {
+		r.Use(jwtauth.Verifier(tokenAuth))
+		r.Get("/inf", func(w http.ResponseWriter, r *http.Request) {
+			_, claims, err := jwtauth.FromContext(r.Context())
+			if err != nil {
+				utils.HandleError(w, r, err, http.StatusUnauthorized)
+				return
+			}
+			render.JSON(w, r, claims)
+		})
 	})
 }
 

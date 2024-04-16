@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	errs "github.com/eonias189/calculationService/backend/internal/errors"
 	"github.com/jackc/pgx/v5"
@@ -51,7 +50,7 @@ func (us *UserService) GetById(id int64) (User, error) {
 	err := us.pool.AcquireFunc(context.TODO(), func(c *pgxpool.Conn) error {
 		return c.QueryRow(context.TODO(), query, id).Scan(&user.Id, &user.Login, &user.HashedPassword)
 	})
-	if errors.Is(err, pgx.ErrNoRows) {
+	if err != nil && err.Error() == pgx.ErrNoRows.Error() {
 		return User{}, errs.ErrNotFound
 	}
 
@@ -68,7 +67,7 @@ func (us *UserService) GetByLogin(login string) (User, error) {
 	err := us.pool.AcquireFunc(context.TODO(), func(c *pgxpool.Conn) error {
 		return c.QueryRow(context.TODO(), query, login).Scan(&user.Id, &user.Login, &user.HashedPassword)
 	})
-	if errors.Is(err, pgx.ErrNoRows) {
+	if err != nil && err.Error() == pgx.ErrNoRows.Error() {
 		return User{}, errs.ErrNotFound
 	}
 

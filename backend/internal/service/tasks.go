@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	errs "github.com/eonias189/calculationService/backend/internal/errors"
 	"github.com/eonias189/calculationService/backend/internal/logger"
@@ -67,7 +66,7 @@ func (ts *TaskService) Add(task Task) (int64, error) {
 
 func (ts *TaskService) GetAllForUser(userId int64, limit, offset int) ([]Task, error) {
 	res := []Task{}
-	query := `SELECT * FROM tasks WHERE user_id=$1 LIMIT $1 OFFSET $2`
+	query := `SELECT * FROM tasks WHERE user_id=$1 LIMIT $2 OFFSET $3`
 	conn, err := ts.pool.Acquire(context.TODO())
 
 	if err != nil {
@@ -146,7 +145,7 @@ func (ts *TaskService) GetById(id int64) (Task, error) {
 	row := conn.QueryRow(context.TODO(), query, id)
 
 	err = row.Scan(&res.Id, &res.UserId, &res.Executor, &res.Expression, &res.Result, &res.Status)
-	if errors.Is(err, pgx.ErrNoRows) {
+	if err != nil && err.Error() == pgx.ErrNoRows.Error() {
 		return Task{}, errs.ErrNotFound
 	}
 

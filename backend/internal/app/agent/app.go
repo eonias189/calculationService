@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/Knetic/govaluate"
 	"github.com/eonias189/calculationService/backend/internal/config/agent_config"
+	errs "github.com/eonias189/calculationService/backend/internal/errors"
 	"github.com/eonias189/calculationService/backend/internal/lib/pool"
 	"github.com/eonias189/calculationService/backend/internal/lib/utils"
 	"github.com/eonias189/calculationService/backend/internal/logger"
@@ -21,11 +21,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-var (
-	ErrExec       = errors.New("execution error")
-	ErrChanClosed = errors.New("chanClosed")
-)
-
 func Calculate(task *pb.Task) (float64, error) {
 	addCount := strings.Count(task.Expression, "+")
 	subCount := strings.Count(task.Expression, "-")
@@ -34,17 +29,17 @@ func Calculate(task *pb.Task) (float64, error) {
 
 	evalExpr, err := govaluate.NewEvaluableExpression(task.Expression)
 	if err != nil {
-		return 0, ErrExec
+		return 0, errs.ErrExecution
 	}
 
-	res, err := evalExpr.Evaluate(nil)
+	res, err := evalExpr.Evaluate(map[string]interface{}{})
 	if err != nil {
-		return 0, ErrExec
+		return 0, errs.ErrExecution
 	}
 
 	resFloat64, ok := res.(float64)
 	if !ok {
-		return 0, ErrExec
+		return 0, errs.ErrExecution
 	}
 
 	time.Sleep(time.Second * time.Duration(addCount) * time.Duration(task.Timeouts.Add))
@@ -136,7 +131,7 @@ func (a *Application) SendResults(ctx context.Context, conn pb.Orchestrator_Conn
 
 			case resp, ok := <-resps:
 				if !ok {
-					return ErrChanClosed
+					return errs.ErrChanClosed
 				}
 
 				resp.SendTime = time.Now().UnixNano()

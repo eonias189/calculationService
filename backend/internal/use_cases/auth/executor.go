@@ -1,8 +1,10 @@
 package use_auth
 
 import (
+	"errors"
 	"time"
 
+	errs "github.com/eonias189/calculationService/backend/internal/errors"
 	"github.com/eonias189/calculationService/backend/internal/service"
 	"github.com/go-chi/jwtauth/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -31,13 +33,16 @@ func (e *Executor) Register(body RegisterBody) (RegisterResponse, error) {
 
 func (e *Executor) Login(body LoginBody) (LoginResponse, error) {
 	user, err := e.us.GetByLogin(body.Login)
+	if errors.Is(err, errs.ErrNotFound) {
+		return LoginResponse{}, errs.ErrInvalidCrendials
+	}
 	if err != nil {
 		return LoginResponse{}, err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(body.Password))
 	if err != nil {
-		return LoginResponse{}, err
+		return LoginResponse{}, errs.ErrInvalidCrendials
 	}
 
 	now := time.Now()

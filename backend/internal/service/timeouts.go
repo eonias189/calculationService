@@ -47,7 +47,7 @@ func (ts *TimeoutsSerice) GetForUser(userId int64) (Timeouts, error) {
 		return c.QueryRow(context.TODO(), query, userId).Scan(&timeouts.UserId, &timeouts.Add, &timeouts.Sub, &timeouts.Mul, &timeouts.Div)
 	})
 
-	if errors.Is(err, pgx.ErrNoRows) {
+	if err != nil && err.Error() == pgx.ErrNoRows.Error() {
 		return Timeouts{}, errs.ErrNotFound
 	}
 
