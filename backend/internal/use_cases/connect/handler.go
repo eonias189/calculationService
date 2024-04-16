@@ -6,6 +6,7 @@ import (
 
 	"github.com/eonias189/calculationService/backend/internal/errors"
 	"github.com/eonias189/calculationService/backend/internal/lib/utils"
+	"github.com/eonias189/calculationService/backend/internal/logger"
 	pb "github.com/eonias189/calculationService/backend/internal/proto"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/metadata"
@@ -107,7 +108,11 @@ func (h *Handler) Connect(conn pb.Orchestrator_ConnectServer) error {
 		}
 	})
 
-	return g.Wait()
+	err = g.Wait()
+	if err != nil {
+		logger.Error(err)
+	}
+	return err
 
 }
 

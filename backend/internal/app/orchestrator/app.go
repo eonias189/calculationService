@@ -74,7 +74,7 @@ func (a *Application) StartGrpcServer(ctx context.Context) func() error {
 }
 
 func (a *Application) Run(ctx context.Context) error {
-	logger.Info("starting")
+	logger.Info("starting at", a.cfg.Address)
 
 	err := a.agentService.DisactivateAll()
 	if err != nil {
@@ -95,7 +95,7 @@ func (a *Application) Run(ctx context.Context) error {
 		}
 	}()
 
-	a.distributor.StartPushing(time.Second * 5)
+	a.distributor.StartPushing(ctx, time.Second*5)
 	g, ctx := errgroup.WithContext(ctx)
 	g.Go(a.StartGrpcServer(ctx))
 

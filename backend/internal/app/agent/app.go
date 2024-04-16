@@ -140,6 +140,7 @@ func (a *Application) SendResults(ctx context.Context, conn pb.Orchestrator_Conn
 				}
 
 				resp.SendTime = time.Now().UnixNano()
+				resp.RunningThreads = int64(a.wp.ExecutingTasks())
 				err := conn.Send(resp)
 				if err != nil {
 					logger.Error(err)

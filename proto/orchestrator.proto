@@ -26,5 +26,6 @@ message ResultResp {
     double result = 2;
     bool error = 3;
     int64 sendTime = 4;
+    int64 runningThreads = 5;
 
 }

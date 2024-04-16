@@ -18,13 +18,11 @@ func (e *Executor) OnConnClose(id int64) error {
 	logger.Info("closing connection with", id)
 	err := e.distributor.Unsubscribe(id)
 	if err != nil {
-		logger.Info("error while ubsubscribing")
 		return err
 	}
 
 	agent, err := e.agentService.GetById(id)
 	if err != nil {
-		logger.Info("error while getting agent by id")
 		return err
 	}
 
@@ -32,7 +30,6 @@ func (e *Executor) OnConnClose(id int64) error {
 	agent.RunningThreads = 0
 	err = e.agentService.Update(agent)
 	if err != nil {
-		logger.Info("error while updating agent")
 		return err
 	}
 
@@ -68,27 +65,23 @@ func (e *Executor) OnResult(id int64, result *pb.ResultResp) error {
 	logger.Info("got result", result.String())
 	err := e.distributor.Done(id)
 	if err != nil {
-		logger.Info("error while sending done")
 		return err
 	}
 
 	agent, err := e.agentService.GetById(id)
 	if err != nil {
-		logger.Info("error while getting agent by id")
 		return err
 	}
 
+	agent.RunningThreads = int(result.RunningThreads)
 	agent.Ping = time.Now().UnixNano() - result.SendTime
-	agent.RunningThreads--
 	err = e.agentService.Update(agent)
 	if err != nil {
-		logger.Info("error while updating agent")
 		return err
 	}
 
 	task, err := e.taskService.GetById(result.TaskId)
 	if err != nil {
-		logger.Info("error while getting task by id")
 		return err
 	}
 
@@ -101,7 +94,6 @@ func (e *Executor) OnResult(id int64, result *pb.ResultResp) error {
 
 	err = e.taskService.Update(task)
 	if err != nil {
-		logger.Info("error while updating task")
 		return err
 	}
 
@@ -109,6 +101,7 @@ func (e *Executor) OnResult(id int64, result *pb.ResultResp) error {
 }
 
 func (e *Executor) OnTask(id int64, task *pb.Task) error {
+	logger.Info("sending", task.String(), "to", id)
 	t, err := e.taskService.GetById(task.Id)
 	if err != nil {
 		return err
@@ -136,6 +129,7 @@ func (e *Executor) OnTask(id int64, task *pb.Task) error {
 }
 
 func (e *Executor) OnStart(id int64) error {
+	logger.Info(id, "connected")
 	agent, err := e.agentService.GetById(id)
 	if err != nil {
 		return err
@@ -144,7 +138,6 @@ func (e *Executor) OnStart(id int64) error {
 	agent.Active = true
 	err = e.agentService.Update(agent)
 	if err != nil {
-		logger.Info("error while updating agent")
 		return err
 	}
 
@@ -154,7 +147,6 @@ func (e *Executor) OnStart(id int64) error {
 func (e *Executor) GetTasks(id int64) (<-chan *pb.Task, error) {
 	agent, err := e.agentService.GetById(id)
 	if err != nil {
-		logger.Info("error while getting agent by id")
 		return nil, err
 	}
 

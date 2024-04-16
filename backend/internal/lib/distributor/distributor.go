@@ -1,6 +1,7 @@
 package distributor
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -112,17 +113,21 @@ func (d *Distributor[T]) Unsubscribe(id int64) error {
 	return nil
 }
 
-func (d *Distributor[T]) StartPushing(interval time.Duration) {
+func (d *Distributor[T]) StartPushing(ctx context.Context, interval time.Duration) {
 	d.wg.Add(1)
 	go func() {
 		defer d.wg.Done()
 		for {
-			time.Sleep(interval)
-			free, found := d.GetFreeConn()
-			if !found {
-				continue
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(interval):
+				free, found := d.GetFreeConn()
+				if !found {
+					continue
+				}
+				d.ShiftAndDistribute(free)
 			}
-			d.ShiftAndDistribute(free)
 		}
 	}()
 }

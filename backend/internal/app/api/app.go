@@ -65,7 +65,7 @@ func (a *Application) MountHandlers() {
 		task := &pb.Task{Id: id, Expression: t.Expression, Timeouts: &pb.Timeouts{
 			Add: 10,
 			Sub: 2,
-			Mul: 15,
+			Mul: 10,
 			Div: 4,
 		}}
 
@@ -101,6 +101,7 @@ func (a *Application) GetCli(ctx context.Context) pb.OrchestratorClient {
 	return pb.NewOrchestratorClient(conn)
 }
 func (a *Application) Run(ctx context.Context) error {
+	logger.Info("starting at", a.cfg.Address)
 	a.MountHandlers()
 	return a.server.ListenAndServe()
 }

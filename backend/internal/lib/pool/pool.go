@@ -10,9 +10,11 @@ type Task interface {
 }
 
 type WorkerPool struct {
-	MaxWorkers int
-	tasks      chan Task
-	wg         sync.WaitGroup
+	MaxWorkers     int
+	tasks          chan Task
+	wg             sync.WaitGroup
+	executingTasks int
+	mu             *sync.RWMutex
 }
 
 func (wp *WorkerPool) Start(ctx context.Context) {
@@ -28,7 +30,13 @@ func (wp *WorkerPool) Start(ctx context.Context) {
 					return
 
 				case task := <-wp.tasks:
+					wp.mu.Lock()
+					wp.executingTasks++
+					wp.mu.Unlock()
 					task.Do()
+					wp.mu.Lock()
+					wp.executingTasks--
+					wp.mu.Unlock()
 				}
 			}
 		}()
@@ -43,8 +51,14 @@ func (wp *WorkerPool) Close() {
 	wp.wg.Wait()
 }
 
+func (wp *WorkerPool) ExecutingTasks() int {
+	wp.mu.RLock()
+	defer wp.mu.RUnlock()
+	return wp.executingTasks
+}
+
 func NewWorkerPool(maxWorkers int) *WorkerPool {
-	return &WorkerPool{MaxWorkers: maxWorkers, wg: sync.WaitGroup{}, tasks: make(chan Task)}
+	return &WorkerPool{MaxWorkers: maxWorkers, wg: sync.WaitGroup{}, tasks: make(chan Task), mu: &sync.RWMutex{}}
 }
 
 type simpleTask struct {
