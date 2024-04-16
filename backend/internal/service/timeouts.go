@@ -11,10 +11,10 @@ import (
 
 type Timeouts struct {
 	UserId int64
-	Add    int64
-	Sub    int64
-	Mul    int64
-	Div    int64
+	Add    uint
+	Sub    uint
+	Mul    uint
+	Div    uint
 }
 
 var (
@@ -59,7 +59,7 @@ func (ts *TimeoutsSerice) GetForUser(userId int64) (Timeouts, error) {
 }
 
 func (ts *TimeoutsSerice) Add(timeouts Timeouts) error {
-	query := `INSERT INTO timeouts (userId, add, sub, mul, div) VALUES ($1, $2, $3, $4, $5)`
+	query := `INSERT INTO timeouts (user_Id, add, sub, mul, div) VALUES ($1, $2, $3, $4, $5)`
 	return ts.pool.AcquireFunc(context.TODO(), func(c *pgxpool.Conn) error {
 		_, err := c.Exec(context.TODO(), query, timeouts.UserId, timeouts.Add, timeouts.Sub, timeouts.Mul, timeouts.Div)
 		return err

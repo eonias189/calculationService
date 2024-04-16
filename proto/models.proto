@@ -10,8 +10,8 @@ message Task {
 }
 
 message Timeouts {
-    int64 add = 1;
-    int64 sub = 2;
-    int64 mul = 3;
-    int64 div = 4;
+    uint64 add = 1;
+    uint64 sub = 2;
+    uint64 mul = 3;
+    uint64 div = 4;
 }

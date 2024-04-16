@@ -89,8 +89,8 @@ func (a *Application) Run(ctx context.Context) error {
 		if err == nil {
 			for _, task := range tasks {
 				a.distributor.Distribute(&pb.Task{Id: task.Task.Id, Expression: task.Task.Expression,
-					Timeouts: &pb.Timeouts{Add: task.Timeouts.Add, Sub: task.Timeouts.Sub,
-						Mul: task.Timeouts.Mul, Div: task.Timeouts.Div}})
+					Timeouts: &pb.Timeouts{Add: uint64(task.Timeouts.Add), Sub: uint64(task.Timeouts.Sub),
+						Mul: uint64(task.Timeouts.Mul), Div: uint64(task.Timeouts.Div)}})
 			}
 		}
 	}()

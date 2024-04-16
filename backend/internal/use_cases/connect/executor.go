@@ -46,10 +46,10 @@ func (e *Executor) OnConnClose(id int64) error {
 	for _, task := range tasks {
 		if task.Status == service.TaskStatusExecuting {
 			err = e.distributor.Distribute(&pb.Task{Id: task.Task.Id, Expression: task.Task.Expression, Timeouts: &pb.Timeouts{
-				Add: task.Timeouts.Add,
-				Sub: task.Timeouts.Sub,
-				Mul: task.Timeouts.Mul,
-				Div: task.Timeouts.Div,
+				Add: uint64(task.Timeouts.Add),
+				Sub: uint64(task.Timeouts.Sub),
+				Mul: uint64(task.Timeouts.Mul),
+				Div: uint64(task.Timeouts.Div),
 			}})
 			if err != nil {
 				return err

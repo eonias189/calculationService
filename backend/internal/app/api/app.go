@@ -12,6 +12,7 @@ import (
 	"github.com/eonias189/calculationService/backend/internal/service"
 	use_auth "github.com/eonias189/calculationService/backend/internal/use_cases/auth"
 	use_tasks "github.com/eonias189/calculationService/backend/internal/use_cases/tasks"
+	use_timeouts "github.com/eonias189/calculationService/backend/internal/use_cases/timeouts"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -67,6 +68,7 @@ func (a *Application) MountHandlers() {
 
 	api.Mount("/auth", use_auth.MakeHandler(a.userService, tokenAuth, expTime))
 	api.Mount("/tasks", use_tasks.MakeHandler(a.tasksService, a.timeoutsService, &Distributer{cli: a.cli}, tokenAuth))
+	api.Mount("/timeouts", use_timeouts.MakeHandler(a.timeoutsService, tokenAuth))
 
 	api.Group(func(r chi.Router) {
 		r.Use(jwtauth.Verifier(tokenAuth))

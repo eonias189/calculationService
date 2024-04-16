@@ -32,7 +32,7 @@ func (e *Executor) PostTask(body PostTaskBody, userId int64) (PostTaskResp, erro
 	}
 
 	err = e.distributer.Distribute(&pb.Task{Id: id, Expression: body.Expression, Timeouts: &pb.Timeouts{
-		Add: timeouts.Add, Sub: timeouts.Sub, Mul: timeouts.Mul, Div: timeouts.Div,
+		Add: uint64(timeouts.Add), Sub: uint64(timeouts.Sub), Mul: uint64(timeouts.Mul), Div: uint64(timeouts.Div),
 	}})
 	if err != nil {
 		return PostTaskResp{}, err
