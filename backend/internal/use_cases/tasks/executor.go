@@ -2,6 +2,8 @@ package use_tasks
 
 import (
 	"errors"
+	"math"
+	"time"
 
 	errs "github.com/eonias189/calculationService/backend/internal/errors"
 	"github.com/eonias189/calculationService/backend/internal/lib/utils"
@@ -15,8 +17,23 @@ type Executor struct {
 	distributer     Distributer
 }
 
+func serviceTaskToTaskSource(task service.Task) TaskSource {
+	if math.IsNaN(task.Result) {
+		task.Result = 0
+		task.Status = service.TaskStatusError
+	}
+
+	return TaskSource{
+		Id:         task.Id,
+		Expression: task.Expression,
+		Result:     task.Result,
+		Status:     string(task.Status),
+		CreateTime: task.CreateTime.UnixNano(),
+	}
+}
+
 func (e *Executor) PostTask(body PostTaskBody, userId int64) (PostTaskResp, error) {
-	id, err := e.taskService.Add(service.Task{Expression: body.Expression, UserId: userId, Status: service.TaskStatusPending})
+	id, err := e.taskService.Add(service.Task{Expression: body.Expression, UserId: userId, Status: service.TaskStatusPending, CreateTime: time.Now()})
 	if err != nil {
 		return PostTaskResp{}, err
 	}
@@ -47,9 +64,7 @@ func (e *Executor) GetTasks(userId int64, limit, offset int) (GetTasksResp, erro
 		return GetTasksResp{}, err
 	}
 
-	return GetTasksResp{Tasks: utils.Map(tasks, func(task service.Task) TaskSource {
-		return TaskSource{Id: task.Id, Expression: task.Expression, Result: task.Result, Status: string(task.Status)}
-	})}, nil
+	return GetTasksResp{Tasks: utils.Map(tasks, serviceTaskToTaskSource)}, nil
 }
 
 func (e *Executor) GetTask(taskId int64, userId int64) (GetTaskResp, error) {
@@ -62,7 +77,7 @@ func (e *Executor) GetTask(taskId int64, userId int64) (GetTaskResp, error) {
 		return GetTaskResp{}, errs.ErrNotFound
 	}
 
-	return GetTaskResp{Task: TaskSource{Id: taskId, Expression: task.Expression, Result: task.Result, Status: string(task.Status)}}, nil
+	return GetTaskResp{Task: serviceTaskToTaskSource(task)}, nil
 }
 
 func NewExecutor(tasksService TaskService, timeoutsService TimeoutsService, distributer Distributer) *Executor {

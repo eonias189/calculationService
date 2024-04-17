@@ -5,7 +5,6 @@ import (
 
 	"github.com/eonias189/calculationService/backend/internal/lib/utils"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
 )
 
@@ -52,11 +51,9 @@ func PatchTimeoutsHandler(e *Executor) http.HandlerFunc {
 	}
 }
 
-func MakeHandler(ts TimeoutsSerice, tokenAuth *jwtauth.JWTAuth) http.Handler {
+func MakeHandler(ts TimeoutsSerice) http.Handler {
 	r := chi.NewRouter()
 	e := NewExecutor(ts)
-
-	r.Use(jwtauth.Verifier(tokenAuth))
 
 	r.Get("/", GetTimeoutsHandler(e))
 	r.Patch("/", PatchTimeoutsHandler(e))

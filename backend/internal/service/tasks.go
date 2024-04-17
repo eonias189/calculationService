@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	errs "github.com/eonias189/calculationService/backend/internal/errors"
 	"github.com/eonias189/calculationService/backend/internal/logger"
@@ -25,6 +26,7 @@ type Task struct {
 	Expression string
 	Result     float64
 	Status     TaskStatus
+	CreateTime time.Time
 }
 
 type TaskWithTimeouts struct {
@@ -42,7 +44,8 @@ func (ts *TaskService) init() error {
 		executor INTEGER,
 		expression TEXT,
 		result double precision,
-		status TEXT
+		status TEXT,
+		create_time timestamp with time zone
 	)`
 	return ts.pool.AcquireFunc(context.TODO(), func(c *pgxpool.Conn) error {
 		_, err := c.Exec(context.TODO(), query)
@@ -52,9 +55,9 @@ func (ts *TaskService) init() error {
 
 func (ts *TaskService) Add(task Task) (int64, error) {
 	var id int64
-	query := `INSERT INTO tasks (user_id, executor, expression, result, status) values ($1, $2, $3, $4, $5) RETURNING id`
+	query := `INSERT INTO tasks (user_id, executor, expression, result, status, create_time) values ($1, $2, $3, $4, $5, $6) RETURNING id`
 	err := ts.pool.AcquireFunc(context.TODO(), func(c *pgxpool.Conn) error {
-		return c.QueryRow(context.TODO(), query, task.UserId, task.Executor, task.Expression, task.Result, task.Status).Scan(&id)
+		return c.QueryRow(context.TODO(), query, task.UserId, task.Executor, task.Expression, task.Result, task.Status, task.CreateTime).Scan(&id)
 	})
 
 	if err != nil {
@@ -66,7 +69,7 @@ func (ts *TaskService) Add(task Task) (int64, error) {
 
 func (ts *TaskService) GetAllForUser(userId int64, limit, offset int) ([]Task, error) {
 	res := []Task{}
-	query := `SELECT * FROM tasks WHERE user_id=$1 LIMIT $2 OFFSET $3`
+	query := `SELECT * FROM tasks WHERE user_id=$1 ORDER BY create_time DESC LIMIT $2 OFFSET $3`
 	conn, err := ts.pool.Acquire(context.TODO())
 
 	if err != nil {
@@ -83,7 +86,7 @@ func (ts *TaskService) GetAllForUser(userId int64, limit, offset int) ([]Task, e
 	defer rows.Close()
 	for rows.Next() {
 		task := Task{}
-		err = rows.Scan(&task.Id, &task.UserId, &task.Executor, &task.Expression, &task.Result, &task.Status)
+		err = rows.Scan(&task.Id, &task.UserId, &task.Executor, &task.Expression, &task.Result, &task.Status, &task.CreateTime)
 		if err != nil {
 			logger.Error(err)
 			continue
@@ -112,7 +115,7 @@ func (ts *TaskService) GetExecutingForAgent(id int64) ([]TaskWithTimeouts, error
 	for rows.Next() {
 		var task TaskWithTimeouts
 		err := rows.Scan(&task.Task.Id, &task.Task.UserId, &task.Task.Executor, &task.Task.Expression,
-			&task.Task.Result, &task.Task.Status, &task.Timeouts.UserId, &task.Timeouts.Add,
+			&task.Task.Result, &task.Task.Status, &task.Task.CreateTime, &task.Timeouts.UserId, &task.Timeouts.Add,
 			&task.Timeouts.Sub, &task.Timeouts.Mul, &task.Timeouts.Div)
 		if err != nil {
 			logger.Error(err)
@@ -144,7 +147,7 @@ func (ts *TaskService) GetById(id int64) (Task, error) {
 	defer conn.Release()
 	row := conn.QueryRow(context.TODO(), query, id)
 
-	err = row.Scan(&res.Id, &res.UserId, &res.Executor, &res.Expression, &res.Result, &res.Status)
+	err = row.Scan(&res.Id, &res.UserId, &res.Executor, &res.Expression, &res.Result, &res.Status, &res.CreateTime)
 	if err != nil && err.Error() == pgx.ErrNoRows.Error() {
 		return Task{}, errs.ErrNotFound
 	}
@@ -201,7 +204,7 @@ func (ts *TaskService) GetAllPending() ([]TaskWithTimeouts, error) {
 	for rows.Next() {
 		var task TaskWithTimeouts
 		err := rows.Scan(&task.Task.Id, &task.Task.UserId, &task.Task.Executor, &task.Task.Expression,
-			&task.Task.Result, &task.Task.Status, &task.Timeouts.UserId, &task.Timeouts.Add, &task.Timeouts.Sub,
+			&task.Task.Result, &task.Task.Status, &task.Task.CreateTime, &task.Timeouts.UserId, &task.Timeouts.Add, &task.Timeouts.Sub,
 			&task.Timeouts.Mul, &task.Timeouts.Div)
 		if err != nil {
 			logger.Error(err)
@@ -216,7 +219,6 @@ func (ts *TaskService) GetAllPending() ([]TaskWithTimeouts, error) {
 func NewTaskService(pool *pgxpool.Pool) (*TaskService, error) {
 	ts := &TaskService{pool: pool}
 	err := ts.init()
-
 	if err != nil {
 		return nil, err
 	}

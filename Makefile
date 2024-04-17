@@ -10,4 +10,9 @@ build-agent:
 build-api:
 	cd backend && docker build -t eonias189/calculation-service/api -f Dockerfile.api . && cd ..
 
+build:
+	make build-agent
+	make build-orchestrator
+	make build-api
+
 .PHONY: gen

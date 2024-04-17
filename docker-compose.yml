@@ -54,6 +54,7 @@ services:
     environment:
       - ORCHESTRATOR_ADDRESS=orchestrator:8081
       - MAX_THREADS=10
+    restart: always
     depends_on:
       - orchestrator
 
@@ -62,6 +63,7 @@ services:
     environment:
       - ORCHESTRATOR_ADDRESS=orchestrator:8081
       - MAX_THREADS=20
+    restart: always
     depends_on:
       - orchestrator
 

@@ -51,7 +51,7 @@ func (as *AgentService) Add(agent Agent) (int64, error) {
 
 func (as *AgentService) GetAll(limit, offset int) ([]Agent, error) {
 	res := []Agent{}
-	query := `SELECT * FROM agents LIMIT $1 OFFSET $2`
+	query := `SELECT * FROM agents ORDER BY NOT active LIMIT $1 OFFSET $2`
 	conn, err := as.pool.Acquire(context.TODO())
 
 	if err != nil {

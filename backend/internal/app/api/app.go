@@ -10,6 +10,7 @@ import (
 	"github.com/eonias189/calculationService/backend/internal/logger"
 	pb "github.com/eonias189/calculationService/backend/internal/proto"
 	"github.com/eonias189/calculationService/backend/internal/service"
+	use_agents "github.com/eonias189/calculationService/backend/internal/use_cases/agents"
 	use_auth "github.com/eonias189/calculationService/backend/internal/use_cases/auth"
 	use_tasks "github.com/eonias189/calculationService/backend/internal/use_cases/tasks"
 	use_timeouts "github.com/eonias189/calculationService/backend/internal/use_cases/timeouts"
@@ -67,11 +68,13 @@ func (a *Application) MountHandlers() {
 	})
 
 	api.Mount("/auth", use_auth.MakeHandler(a.userService, tokenAuth, expTime))
-	api.Mount("/tasks", use_tasks.MakeHandler(a.tasksService, a.timeoutsService, &Distributer{cli: a.cli}, tokenAuth))
-	api.Mount("/timeouts", use_timeouts.MakeHandler(a.timeoutsService, tokenAuth))
+	api.Mount("/agents", use_agents.MakeHandler(a.agentService))
 
 	api.Group(func(r chi.Router) {
 		r.Use(jwtauth.Verifier(tokenAuth))
+		r.Mount("/tasks", use_tasks.MakeHandler(a.tasksService, a.timeoutsService, &Distributer{cli: a.cli}))
+		r.Mount("/timeouts", use_timeouts.MakeHandler(a.timeoutsService))
+
 		r.Get("/inf", func(w http.ResponseWriter, r *http.Request) {
 			_, claims, err := jwtauth.FromContext(r.Context())
 			if err != nil {
@@ -81,6 +84,7 @@ func (a *Application) MountHandlers() {
 			render.JSON(w, r, claims)
 		})
 	})
+
 }
 
 func (a *Application) GetCli(ctx context.Context) pb.OrchestratorClient {

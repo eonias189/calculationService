@@ -8,7 +8,6 @@ import (
 	errs "github.com/eonias189/calculationService/backend/internal/errors"
 	"github.com/eonias189/calculationService/backend/internal/lib/utils"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
 )
 
@@ -87,12 +86,9 @@ func GetTaskHandler(e *Executor) http.HandlerFunc {
 	}
 }
 
-func MakeHandler(taskService TaskService, timeoutsService TimeoutsService, distributer Distributer, tokenAuth *jwtauth.JWTAuth) http.Handler {
+func MakeHandler(taskService TaskService, timeoutsService TimeoutsService, distributer Distributer) http.Handler {
 	r := chi.NewRouter()
 	e := NewExecutor(taskService, timeoutsService, distributer)
-
-	r.Use(jwtauth.Verifier(tokenAuth))
-
 	r.Post("/", PostTaskHandler(e))
 	r.Get("/{id}", GetTaskHandler(e))
 	r.Get("/", GetTasksHandler(e))
