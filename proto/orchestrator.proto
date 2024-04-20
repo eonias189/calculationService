@@ -8,6 +8,7 @@ service Orchestrator {
     rpc Register(RegisterReq) returns (RegisterResp);
     rpc Connect (stream ResultResp) returns (stream Task);
     rpc Distribute(Task) returns (Empty);
+    rpc Pong(PongReq) returns (Empty);
 
 }
 
@@ -25,7 +26,10 @@ message ResultResp {
     int64 taskId = 1;
     double result = 2;
     bool error = 3;
-    int64 sendTime = 4;
     int64 runningThreads = 5;
+}
 
+message PongReq {
+    int64 id = 1;
+    int64 sentTime = 2;
 }

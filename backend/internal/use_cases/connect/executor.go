@@ -1,8 +1,6 @@
 package use_connect
 
 import (
-	"time"
-
 	"github.com/eonias189/calculationService/backend/internal/logger"
 	pb "github.com/eonias189/calculationService/backend/internal/proto"
 	"github.com/eonias189/calculationService/backend/internal/service"
@@ -74,7 +72,6 @@ func (e *Executor) OnResult(id int64, result *pb.ResultResp) error {
 	}
 
 	agent.RunningThreads = int(result.RunningThreads)
-	agent.Ping = time.Now().UnixNano() - result.SendTime
 	err = e.agentService.Update(agent)
 	if err != nil {
 		return err

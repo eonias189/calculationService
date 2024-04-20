@@ -25,6 +25,7 @@ type OrchestratorClient interface {
 	Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterResp, error)
 	Connect(ctx context.Context, opts ...grpc.CallOption) (Orchestrator_ConnectClient, error)
 	Distribute(ctx context.Context, in *Task, opts ...grpc.CallOption) (*Empty, error)
+	Pong(ctx context.Context, in *PongReq, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type orchestratorClient struct {
@@ -84,6 +85,15 @@ func (c *orchestratorClient) Distribute(ctx context.Context, in *Task, opts ...g
 	return out, nil
 }
 
+func (c *orchestratorClient) Pong(ctx context.Context, in *PongReq, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/github.com.eonias189.calculationService.proto.Orchestrator/Pong", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrchestratorServer is the server API for Orchestrator service.
 // All implementations must embed UnimplementedOrchestratorServer
 // for forward compatibility
@@ -91,6 +101,7 @@ type OrchestratorServer interface {
 	Register(context.Context, *RegisterReq) (*RegisterResp, error)
 	Connect(Orchestrator_ConnectServer) error
 	Distribute(context.Context, *Task) (*Empty, error)
+	Pong(context.Context, *PongReq) (*Empty, error)
 	mustEmbedUnimplementedOrchestratorServer()
 }
 
@@ -106,6 +117,9 @@ func (UnimplementedOrchestratorServer) Connect(Orchestrator_ConnectServer) error
 }
 func (UnimplementedOrchestratorServer) Distribute(context.Context, *Task) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Distribute not implemented")
+}
+func (UnimplementedOrchestratorServer) Pong(context.Context, *PongReq) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Pong not implemented")
 }
 func (UnimplementedOrchestratorServer) mustEmbedUnimplementedOrchestratorServer() {}
 
@@ -182,6 +196,24 @@ func _Orchestrator_Distribute_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Orchestrator_Pong_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PongReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrchestratorServer).Pong(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/github.com.eonias189.calculationService.proto.Orchestrator/Pong",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrchestratorServer).Pong(ctx, req.(*PongReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Orchestrator_ServiceDesc is the grpc.ServiceDesc for Orchestrator service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -196,6 +228,10 @@ var Orchestrator_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Distribute",
 			Handler:    _Orchestrator_Distribute_Handler,
+		},
+		{
+			MethodName: "Pong",
+			Handler:    _Orchestrator_Pong_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

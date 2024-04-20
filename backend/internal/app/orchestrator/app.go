@@ -13,6 +13,7 @@ import (
 	"github.com/eonias189/calculationService/backend/internal/service"
 	use_connect "github.com/eonias189/calculationService/backend/internal/use_cases/connect"
 	use_distribute "github.com/eonias189/calculationService/backend/internal/use_cases/distribute"
+	use_pong "github.com/eonias189/calculationService/backend/internal/use_cases/pong"
 	use_register "github.com/eonias189/calculationService/backend/internal/use_cases/register"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/sync/errgroup"
@@ -31,6 +32,7 @@ type GrpcHandler struct {
 	registerer    use_register.Registerer
 	connector     use_connect.Connector
 	distributable use_distribute.Distributable
+	ponger        use_pong.Ponger
 	pb.UnimplementedOrchestratorServer
 }
 
@@ -46,6 +48,10 @@ func (gh *GrpcHandler) Distribute(ctx context.Context, task *pb.Task) (*pb.Empty
 	return gh.distributable.Distribute(ctx, task)
 }
 
+func (gh *GrpcHandler) Pong(ctx context.Context, req *pb.PongReq) (*pb.Empty, error) {
+	return gh.ponger.Pong(ctx, req)
+}
+
 func (a *Application) StartGrpcServer(ctx context.Context) func() error {
 	return func() error {
 		listener, err := net.Listen("tcp", a.cfg.Address)
@@ -58,6 +64,7 @@ func (a *Application) StartGrpcServer(ctx context.Context) func() error {
 			registerer:    use_register.MakeHandler(a.agentService),
 			connector:     use_connect.MakeHandler(a.taskService, a.agentService, a.distributor),
 			distributable: use_distribute.MakeHandler(a.distributor),
+			ponger:        use_pong.MakeHandler(a.agentService),
 		}
 		pb.RegisterOrchestratorServer(serv, handler)
 

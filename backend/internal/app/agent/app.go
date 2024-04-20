@@ -62,7 +62,7 @@ func SetConnMetadata(ctx context.Context, id int64) context.Context {
 	return metadata.AppendToOutgoingContext(ctx, "id", fmt.Sprint(id))
 }
 
-func (a *Application) GetTasks(ctx context.Context, conn pb.Orchestrator_ConnectClient, out chan<- *pb.Task) func() error {
+func GetTasks(ctx context.Context, conn pb.Orchestrator_ConnectClient, out chan<- *pb.Task) func() error {
 	return func() error {
 		for {
 			select {
@@ -134,7 +134,6 @@ func (a *Application) SendResults(ctx context.Context, conn pb.Orchestrator_Conn
 					return errs.ErrChanClosed
 				}
 
-				resp.SendTime = time.Now().UnixNano()
 				resp.RunningThreads = int64(a.wp.ExecutingTasks())
 				err := conn.Send(resp)
 				if err != nil {
@@ -146,6 +145,23 @@ func (a *Application) SendResults(ctx context.Context, conn pb.Orchestrator_Conn
 		}
 	}
 
+}
+
+func SendPong(ctx context.Context, id int64, cli pb.OrchestratorClient) func() error {
+	const interval = time.Second * 10
+	return func() error {
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(interval):
+				_, err := cli.Pong(context.TODO(), &pb.PongReq{Id: id, SentTime: time.Now().UnixNano()})
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
 }
 
 func (a *Application) Register(ctx context.Context, cli pb.OrchestratorClient) int64 {
@@ -221,8 +237,9 @@ func (a *Application) Run(ctx context.Context) {
 			logger.Info("got connection")
 
 			g, errGrCtx := errgroup.WithContext(ctx)
-			g.Go(a.GetTasks(errGrCtx, conn, tasks))
+			g.Go(GetTasks(errGrCtx, conn, tasks))
 			g.Go(a.SendResults(errGrCtx, conn, resps))
+			g.Go(SendPong(errGrCtx, id, cli))
 
 			err = g.Wait()
 			if err != nil {
