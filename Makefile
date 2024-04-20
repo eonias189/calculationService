@@ -10,9 +10,13 @@ build-agent:
 build-api:
 	cd backend && docker build -t eonias189/calculation-service/api -f Dockerfile.api . && cd ..
 
+build-frontend:
+	cd frontend && docker build -t eonias189/calculation-service/frontend . && cd ..
+
 build:
 	make build-agent
 	make build-orchestrator
 	make build-api
+	make build-frontend
 
 .PHONY: gen

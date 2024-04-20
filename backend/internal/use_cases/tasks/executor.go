@@ -28,15 +28,18 @@ func serviceTaskToTaskSource(task service.Task) TaskSource {
 		Expression: task.Expression,
 		Result:     task.Result,
 		Status:     string(task.Status),
-		CreateTime: task.CreateTime.UnixNano(),
+		CreateTime: task.CreateTime.Format(time.RFC3339),
 	}
 }
 
 func (e *Executor) PostTask(body PostTaskBody, userId int64) (PostTaskResp, error) {
-	id, err := e.taskService.Add(service.Task{Expression: body.Expression, UserId: userId, Status: service.TaskStatusPending, CreateTime: time.Now()})
+	task := service.Task{Expression: body.Expression, UserId: userId, Status: service.TaskStatusPending, CreateTime: time.Now()}
+	id, err := e.taskService.Add(task)
 	if err != nil {
 		return PostTaskResp{}, err
 	}
+
+	task.Id = id
 
 	timeouts, err := e.timeoutsService.GetForUser(userId)
 	if errors.Is(err, errs.ErrNotFound) {
@@ -55,7 +58,7 @@ func (e *Executor) PostTask(body PostTaskBody, userId int64) (PostTaskResp, erro
 		return PostTaskResp{}, err
 	}
 
-	return PostTaskResp{Task: TaskSource{Id: id, Expression: body.Expression, Result: 0, Status: string(service.TaskStatusPending)}}, nil
+	return PostTaskResp{Task: serviceTaskToTaskSource(task)}, nil
 }
 
 func (e *Executor) GetTasks(userId int64, limit, offset int) (GetTasksResp, error) {

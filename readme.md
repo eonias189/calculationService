@@ -1,66 +1,197 @@
-<h1>Описание устарело!</h1>
-<h1>Установка</h1>
-
-```
-git clone https://github.com/eonias189/calculationService.git <path>
-
-cd <path>
-scripts/install
-```
-
-path - путь для установки
-
-> Для установки необходим компилятор go, nodejs и yarn (yarn можно установить через `npm i -g yarn`)
+<h1>Описание</h1>
+<p>Calculation service - это кластер для распределения вычислений и их выполнения. Он состоит из следующих сервисов:</p>
+<ul>
+<li>frontend - графический интерфейс</li>
+<li>api - сервис, который обрабатывает клиентские запросы</li>
+<li>orchestrator - сервис, который распределяет задачи и обновляет информацию об агентах</li>
+<li>agent (несколько) - сервис, выполняющий задачи</li>
+<li>postgres - сервис с базой данных</li>
+</ul>
 
 <h1>Запуск</h1>
+из корня проекта
 
 ```
-scripts/run-orchestrator
-scripts/run-frontend
+make build
 ```
 
-<h3>Для запуска агентов:</h3>
-
 ```
-go run agent/cmd/main.go <port> <threads>
+docker-compose up
 ```
 
-где port - четырёхзначное число (не 8081), threads - количество потоков агента
+Api программы по умолчанию доступно на порту 8080. Графический интерфейс по умолчанию доступен на портy 3000
 
-> Каждый скрипт нужно запускать в отдельном терминале. Агентов можно запустить несколько, но у них должны быть разные порты!
+<details>
+<summary>Если нет make</summary>
 
-Сервер с оркестратором работает на http://localhost:8081
+```
+cd backend
+```
 
-Сервер с фронтендом работает на http://localhost:3000
+```
+docker build -t eonias189/calculation-service/orchestrator -f Dockerfile.orchestrator .
+```
 
-Сервера агентов работают на http://localhost:<port\>, где port - порт, с которым запущен агент
+```
+docker build -t eonias189/calculation-service/agent -f Dockerfile.agent .
+```
 
-<h2>Взаимодействие с серверами</h2>
-Эндпоинты для взаимодействия с серверами указаны в <a href="https://github.com/eonias189/calculationService/blob/main/endpoints.txt">endpoints.txt</a>
+```
+docker build -t eonias189/calculation-service/api -f Dockerfile.api .
+```
 
-Протокол взаимодействия указан в <a href="https://github.com/eonias189/calculationService/blob/main/.proto">.proto</a>
+```
+cd ..
+```
 
-Сервер с фронтендом имеет графический интерфейс для взаимодействия
+```
+cd frontend
+```
 
-> Если сервер агента был отключен во время выполнения задач, то перед тем, как подключать его обратно, необходимо дождаться, когда задачи, который выполнял этот агент, перейдут в режим ожидания (их цвет изменится на серый), иначе они не выполнятся никогда
+```
+docker build -t eonias189/calculation-service/frontend .
+```
 
-<h1>Как Работает</h1>
+```
+cd ..
+```
 
-<image src="./docs/scheme.png">
+</details>
 
-Пользователь через сервер с фронтендом посылает на сервер оркестратора запросы на добавление задачи/изменение таймаутов/получение информации о задачах/агентах/таймаутах.</br>
+<h1>Примеры использования</h1>
+<h3>Через http запросы</h3>
+<details>
+<summary>Регистрация</summary>
+Запрос
 
-Информацию о задачах/агентах/таймаутах оркестратор берёт из базы данных. В отдельном потоке оркестратор с определённым интервалом делает запросы к агентам, чтобы обновлять информацию о них. Также в отдельном потоке он проверяет ping агентов и при обнаружении отключенного агента изменяет статус всех задач, которые выполняет этот агент на "ожидание распределения".
+```
+curl --location 'http://127.0.0.1:8080/api/auth/register' \
+--header 'Content-Type: application/json' \
+--data '{
+    "login": "login",
+    "password": "secret"
+}'
+```
 
-Агенты при запуске делают запрос на регистрацию к оркестратору и получают свой id. В отдельном потоке они с определённым интервалом (при наличии свободного потока для выполнения) делают запрос на получение новой задачи и после выполнения делают запрос на установление результата.
-</br>
+Ответ
 
-<h1>Возможные вопросы</h1>
+```
+{}
+```
 
-<h3>Где документация к коду?</h3>
+</details>
 
-> Код написан по принципам самодокументирования
+<details>
+<summary>Вход</summary>
+Запрос
 
-<h3>Зачем нужен модуль backend?</h3>
+```
+curl --location 'http://127.0.0.1:8080/api/auth/login' \
+--header 'Content-Type: application/json' \
+--data '{
+    "login": "login",
+    "password": "secret"
+}'
+```
 
-> В этом модуле хранится код, который используется и в модуле оркестратора, и в модуле агента
+Ответ
+
+```
+{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTYyMzUzOTEsImlhdCI6MTcxMzY0MzM5MSwibG9naW4iOiJsb2dpbiIsIm5iZiI6MTcxMzY0MzM5MSwidXNlcl9pZCI6NX0.r6xQZsTDYz9BuDEhdKMeV9Q6waW7cD8dl-aDMPKWH5k"}
+```
+
+</details>
+
+<details>
+<summary>Мониторинг агентов</summary>
+Запрос
+
+```
+curl --location 'http://127.0.0.1:8080/api/agents?limit=2&offset=1'
+```
+
+Ответ
+
+```
+{"agents":[{"id":9,"ping":0,"active":true,"max_threads":10,"running_threads":0},{"id":8,"ping":0,"active":false,"max_threads":10,"running_threads":0}]}
+```
+
+</details>
+
+<details>
+<summary>Установка таймаутов</summary>
+В теле запроса можно указать только те операции, таймауты на которые нужно изменить
+Запрос
+
+```
+curl --location --request PATCH 'http://127.0.0.1:8080/api/timeouts' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTYyMzUzOTEsImlhdCI6MTcxMzY0MzM5MSwibG9naW4iOiJsb2dpbiIsIm5iZiI6MTcxMzY0MzM5MSwidXNlcl9pZCI6NX0.r6xQZsTDYz9BuDEhdKMeV9Q6waW7cD8dl-aDMPKWH5k' \
+--header 'Content-Type: application/json' \
+--data '{
+    "add": 8,
+    "mul": 13
+}'
+```
+
+Ответ
+
+```
+{"timeouts":{"add":8,"sub":0,"mul":13,"div":0}}
+```
+
+</details>
+
+<details>
+<summary>Добавление задачи</summary>
+Запрос
+
+```
+curl --location 'http://127.0.0.1:8080/api/tasks' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTYyMzUzOTEsImlhdCI6MTcxMzY0MzM5MSwibG9naW4iOiJsb2dpbiIsIm5iZiI6MTcxMzY0MzM5MSwidXNlcl9pZCI6NX0.r6xQZsTDYz9BuDEhdKMeV9Q6waW7cD8dl-aDMPKWH5k' \
+--header 'Content-Type: application/json' \
+--data '{
+    "expression": "22 + 22 * 22"
+}'
+```
+
+Ответ
+
+```
+{"task":{"id":53,"expression":"22 + 22 * 22","result":0,"status":"pending","createTime":"2024-04-20T20:29:21Z"}}
+```
+
+</details>
+
+<details>
+<summary>Получение результата задачи по id</summary>
+Запрос
+
+```
+curl --location 'http://127.0.0.1:8080/api/tasks/53' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTYyMzUzOTEsImlhdCI6MTcxMzY0MzM5MSwibG9naW4iOiJsb2dpbiIsIm5iZiI6MTcxMzY0MzM5MSwidXNlcl9pZCI6NX0.r6xQZsTDYz9BuDEhdKMeV9Q6waW7cD8dl-aDMPKWH5k'
+```
+
+Ответ
+
+```
+{"task":{"id":53,"expression":"22 + 22 * 22","result":506,"status":"success","createTime":"2024-04-20T20:29:21Z"}}
+```
+
+</details>
+
+<details>
+<summary>Получение всех задач</summary>
+Запрос
+
+```
+curl --location 'http://127.0.0.1:8080/api/tasks?limit=2&offset=1' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTYyMzUzOTEsImlhdCI6MTcxMzY0MzM5MSwibG9naW4iOiJsb2dpbiIsIm5iZiI6MTcxMzY0MzM5MSwidXNlcl9pZCI6NX0.r6xQZsTDYz9BuDEhdKMeV9Q6waW7cD8dl-aDMPKWH5k'
+```
+
+Ответ
+
+```
+{"tasks":[{"id":52,"expression":"22 + 22 * 22","result":506,"status":"success","createTime":"2024-04-20T20:26:20Z"},{"id":51,"expression":"22 + 22 * 22","result":506,"status":"success","createTime":"2024-04-20T20:13:43Z"}]}
+```
+
+</details>

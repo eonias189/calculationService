@@ -37,6 +37,14 @@ services:
     ports:
       - 8081:8081
 
+  frontend:
+    image: eonias189/calculation-service/frontend
+    depends_on:
+      - api
+    restart: always
+    ports:
+      - 3000:80
+
   api:
     image: eonias189/calculation-service/api
     environment:

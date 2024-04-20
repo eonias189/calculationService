@@ -13,7 +13,7 @@ type TaskSource struct {
 	Expression string  `json:"expression"`
 	Result     float64 `json:"result"`
 	Status     string  `json:"status"`
-	CreateTime int64   `json:"createTime"`
+	CreateTime string  `json:"createTime"`
 }
 
 type GetTasksResp struct {
