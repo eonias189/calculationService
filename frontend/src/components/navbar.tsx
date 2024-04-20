@@ -1,37 +1,44 @@
-"use client";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import cx from "classnames";
 import { FC } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import clsx from "clsx";
 
-type LinkData = {
-    name: string;
-    href: string;
-};
-
-interface NavbarProps {
-    links: LinkData[];
+interface ILink {
+  to: string;
+  label: string;
 }
 
-const Navbar: FC<NavbarProps> = ({ links }) => {
-    const pathName = usePathname();
-    return (
-        <nav className="flex flex-row mx-auto mt-2 gap-2  w-4/5 rounded-lg">
-            {links.map((link, key) => (
-                <Link
-                    key={key}
-                    href={link.href}
-                    className={`rounded-md hover:border-teal-500 p-1 relative overflow-hidden after:size-full after:absolute after:top-0 after:left-0 after:-translate-x-full after:z-10 after:bg-teal-500  hover:after:translate-x-0 after:transition-all after:duration-300 ${cx(
-                        {
-                            "bg-teal-500": pathName === link.href,
-                        }
-                    )}`}
-                >
-                    <span className="relative z-20 -translate-x-1/2 -translate-y-1/2">{link.name}</span>
-                </Link>
-            ))}
-        </nav>
-    );
+const links: ILink[] = [
+  {
+    to: "/",
+    label: "tasks",
+  },
+  {
+    to: "/agents",
+    label: "agents",
+  },
+  {
+    to: "/timeouts",
+    label: "timeouts",
+  },
+];
+
+const Navbar: FC = () => {
+  const { pathname } = useLocation();
+
+  return (
+    <div className="flex flex-row gap-4 w-[100%] p-[0.8rem]">
+      {links.map((link) => (
+        <span
+          key={link.to}
+          className={clsx("text-sky-500 border-sky-500 px-[0.4rem] h-min rounded hover:border-b-4 transition", {
+            "border-b-4": pathname === link.to,
+          })}
+        >
+          <Link to={link.to}>{link.label}</Link>
+        </span>
+      ))}
+    </div>
+  );
 };
 
 export default Navbar;
