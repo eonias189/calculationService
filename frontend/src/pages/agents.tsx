@@ -3,6 +3,7 @@ import { useQuery } from "react-query";
 import { getAgents } from "../api";
 import AgentUi from "../components/ui/agent";
 import Input from "../components/ui/input";
+import Header from "../components/ui/header";
 
 const AgentsPage: FC = () => {
   const [showDisable, setShowDisable] = useState(false);
@@ -18,11 +19,11 @@ const AgentsPage: FC = () => {
   });
 
   if (isError) {
-    return <h1 className="text-center w-[100%] text-xl mt-[1rem]">error while fetching agents: {`${error}`}</h1>;
+    return <Header>error while fetching agents: {`${error}`}</Header>;
   }
 
   if (isFetching) {
-    return <h1 className="text-center w-[100%] text-xl mt-[1rem]">Fetching</h1>;
+    return <Header>Fetching</Header>;
   }
 
   return (

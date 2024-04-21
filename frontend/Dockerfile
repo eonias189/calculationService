@@ -9,13 +9,13 @@ WORKDIR /app
 COPY package*.json /app/
 
 #Run command npm install to install packages
-RUN npm install
+RUN yarn install
 
 #copy all the folder contents from local to container
 COPY . .
 
 #create a react production build
-RUN npm run build
+RUN yarn build
 
 #get the latest alpine image from nginx registry
 FROM nginx:alpine

@@ -23,7 +23,7 @@ export const setTimeouts = async (timeouts: Partial<Timeouts>, token: string): P
   const url = BASE_URL + "/timeouts";
   const body: SetTimeoutsReq = timeouts;
   const resp = await fetch(url, {
-    method: "POST",
+    method: "PATCH",
     headers: {
       Authorization: `Bearer ${token}`,
     },

@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import TaskUI from "../components/ui/task";
 import Input from "../components/ui/input";
 import Button from "../components/ui/button";
+import Header from "../components/ui/header";
 
 const TasksPage: FC = () => {
   const [expression, setExpression] = useState("");
@@ -30,15 +31,11 @@ const TasksPage: FC = () => {
   });
 
   if (isFetching) {
-    return <h1 className="text-center w-[100%] text-xl mt-[1rem]">Fetching</h1>;
+    return <Header>Fetching</Header>;
   }
 
   if (isError) {
-    return (
-      <h1 className="text-center w-[100%] text-xl mt-[1rem]">
-        Error while fetching tasks (maybe you need authorization)
-      </h1>
-    );
+    return <Header>Error while fetching tasks (maybe you need authorization)</Header>;
   }
 
   return (
