@@ -9,6 +9,10 @@ module.exports = {
       gridTemplateRows: {
         "cutom-layout": "min-content auto",
       },
+      colors: {
+        primary: "#0d6efd",
+        secondary: "#6c757d",
+      },
     },
   },
   plugins: [],

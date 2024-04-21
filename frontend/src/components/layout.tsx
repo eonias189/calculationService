@@ -1,4 +1,4 @@
-import { FC, ReactElement, ReactNode } from "react";
+import { FC, ReactNode } from "react";
 
 export interface LayoutProps {
   navbar: ReactNode;
