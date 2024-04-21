@@ -1,5 +1,4 @@
-import { FC, useEffect, useState } from "react";
-import { Task } from "../api/types";
+import { FC, useState } from "react";
 import { addTask, getTasks } from "../api";
 import { useAuth } from "../hooks/useAuth";
 import { useMutation, useQuery, useQueryClient } from "react-query";
@@ -30,8 +29,16 @@ const TasksPage: FC = () => {
     },
   });
 
+  if (isFetching) {
+    return <h1 className="text-center w-[100%] text-xl mt-[1rem]">Fetching</h1>;
+  }
+
   if (isError) {
-    return <h1>Необходима авторизация</h1>;
+    return (
+      <h1 className="text-center w-[100%] text-xl mt-[1rem]">
+        Error while fetching tasks (maybe you need authorization)
+      </h1>
+    );
   }
 
   return (
