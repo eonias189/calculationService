@@ -5,6 +5,7 @@ export const getTasks = async (
   token: string,
   { limit, offset }: { limit?: number; offset?: number }
 ): Promise<Task[]> => {
+  let url = BASE_URL + "/tasks";
   const queryParams = new URLSearchParams();
   if (limit !== undefined) {
     queryParams.set("limit", `${limit}`);
@@ -13,7 +14,11 @@ export const getTasks = async (
     queryParams.set("offset", `${offset}`);
   }
 
-  const url = BASE_URL + "/tasks?" + queryParams.toString();
+  if (queryParams.toString() !== "") {
+    url += "?";
+  }
+
+  url += queryParams.toString();
   const resp = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,

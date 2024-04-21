@@ -25,10 +25,12 @@ func serviceTaskToTaskSource(task service.Task) TaskSource {
 
 	if math.IsInf(task.Result, 1) {
 		task.Result = math.MaxFloat64
+		task.Status = service.TaskStatusError
 	}
 
 	if math.IsInf(task.Result, -1) {
 		task.Result = -math.MaxFloat64
+		task.Status = service.TaskStatusError
 	}
 
 	return TaskSource{

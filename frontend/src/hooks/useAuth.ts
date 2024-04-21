@@ -13,6 +13,7 @@ const getLogin = (token: string): [login: string, authorized: boolean] => {
 export const LOCAL_STORAGE_TOKEN_KEY = "token";
 
 export const useAuth = (): {
+  token?: string;
   login: string;
   authorized: boolean;
   setToken(token: string): void;
@@ -50,5 +51,5 @@ export const useAuth = (): {
     clear();
   };
 
-  return { login, authorized, setToken, clearToken };
+  return { token, login, authorized, setToken, clearToken };
 };
